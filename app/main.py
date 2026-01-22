@@ -1158,9 +1158,9 @@ def render_app_header(show_banner: bool = True):
         st.markdown(
             """
             <div style='text-align:center;'>
-              <h1>🛡️ Municipal Cyber Ethics Decision-Support Prototype</h1>
+              <h1>🛡️ Municipal Cybersecurity Reasoning Prototype</h1>
               <div style="font-size:2.0rem; font-weight:800; letter-spacing:0.01em; color:#4C8BF5; margin-top:0.25rem;">
-                Because what's secure isn't always what's right.
+                What's Secure Isn't Always What's Right.
               </div>
             </div>
             """,
