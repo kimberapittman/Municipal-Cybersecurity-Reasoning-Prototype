@@ -1,0 +1,89 @@
+id: "sandiego"
+
+title: "CASE 2: SAN DIEGO – WHEN DATA PROTECTION MEETS PUBLIC AUTONOMY"
+
+ui_title: "City of San Diego – When Data Protection Meets Public Autonomy"
+
+short_summary: >
+  The San Diego smart streetlight program presents a case in which municipal cybersecurity
+  practitioners confronted a decision about continued system access with implications for
+  data governance and public oversight. The decision examined in this case centers on whether
+  to maintain or restrict access to smart streetlight footage once practitioners became aware
+  that the system was being used beyond its originally documented scope and in the absence of
+  clearly defined governance procedures.
+
+sources:
+  - "23–40: Sources cited in Chapter III case reconstruction text."
+
+background:
+  technical_operational_background:
+    - In 2016, the San Diego City Council approved a smart streetlight initiative framed as an energy-efficiency and urban-analytics program.
+    - Thousands of streetlights were retrofitted with LED lighting integrated with cameras and sensor-equipped units capable of collecting environmental and mobility data.
+    - The sensor network covered roughly half of the city, creating a wide geographic footprint for data collection.
+    - The system operated through a vendor-supported platform in which the vendor owned processed data while city agencies accessed underlying data.
+    - System management required coordination across municipal departments and external vendors for data integration and maintenance.
+
+  triggering_condition_key_events:
+    - Beginning in 2018, the San Diego Police Department began requesting and using smart streetlight footage for criminal investigations.
+    - Law-enforcement use expanded beyond the system’s originally documented energy-efficiency and analytics purposes.
+    - By 2019, footage was used in investigations including violent crimes, vandalism, and protest-related incidents.
+    - Media reporting in 2019 increased public awareness of law-enforcement access to the system.
+    - Public scrutiny raised questions about how footage was accessed, governed, and authorized.
+
+technical:
+  decision_context:
+    - As expanded law-enforcement access to the smart streetlights platform became operationally visible, municipal cybersecurity practitioners were required to decide whether existing access permissions should remain in place or be modified. The decision centered on configuring system access controls in the absence of a clearly articulated governance structure specifying when and how video data retrieval was authorized.
+
+  nist_csf_mapping:
+    - function: "Protect (PR)"
+      categories:
+        - "PR.AA – Identity Management, Authentication, and Access Control"
+      rationale: >
+        This decision aligns with the Protect function of the NIST CSF because practitioners
+        were evaluating how access rights to the platform should be configured in the absence
+        of defined governance procedures. Framing the situation through Protect clarifies that
+        the operational task involved determining what access posture was defensible while the
+        scope and authority of data retrieval practices were under review.
+
+ethical:
+  tension:
+    - id: "T1"
+      description: >
+        Maintaining access to system footage to support investigative and public-safety
+        purposes versus limiting access to respect resident autonomy and undocumented
+        expectations regarding how municipal data systems would be used.
+
+  pfce_analysis:
+    - principle: "Beneficence"
+      description: >
+        Access to smart streetlight footage could support investigative efforts intended to
+        advance public safety.
+    - principle: "Autonomy"
+      description: >
+        Residents were not provided clear information about the circumstances under which
+        video data might be retrieved beyond the system’s original framing.
+    - principle: "Justice"
+      description: >
+        Ambiguities in access procedures shaped how different communities could experience or
+        perceive the governance of municipal data systems.
+    - principle: "Explicability"
+      description: >
+        Limited clarity regarding access authority, oversight mechanisms, and retrieval
+        procedures constrained practitioners’ ability to justify continued access.
+
+constraints:
+  - The initiative was designed for energy-efficiency and urban analytics and did not anticipate law-enforcement use.
+  - The city lacked a formal surveillance policy governing law-enforcement access to smart streetlight footage.
+  - No cross-departmental review process existed for evaluating secondary uses of municipal data systems.
+  - Operational responsibility for the system was distributed across departments and vendor partners.
+  - Funding and procurement arrangements limited awareness of surveillance capabilities among city leaders and the public.
+
+decision_outcome:
+  decision:
+    - San Diego suspended new installations of the smart streetlight system and temporarily halted law-enforcement access while conducting a broader review of governance policies and data-management practices.
+
+  outcomes_implications:
+    - Investigative workflows and urban-analytics activities were temporarily constrained.
+    - The city initiated development of clearer governance and oversight structures.
+    - Public scrutiny influenced expectations for transparency and accountability in municipal data systems.
+    - The moratorium and subsequent reforms shaped public trust and institutional legitimacy.

@@ -1,0 +1,98 @@
+id: "baltimore"
+
+title: "CASE 1: BALTIMORE – WHEN PROTECTING SYSTEMS MEETS PROTECTING THE PUBLIC"
+
+ui_title: "City of Baltimore – When Protecting Systems Meets Protecting the Public"
+
+short_summary: >
+  The Baltimore ransomware attack presents a case in which municipal cybersecurity practitioners
+  confronted a decision with immediate consequences for service continuity across the city. The
+  decision examined in this case centers on whether to disconnect additional municipal systems to
+  limit further spread of the ransomware while the scope of the compromise remained unclear.
+
+sources:
+  - "2–22: Sources cited in Chapter III case reconstruction text."
+
+background:
+  technical_operational_background:
+    - In 2019, the City of Baltimore operated a distributed municipal IT environment supporting administrative and public-service functions across multiple departments.
+    - The city’s technology environment included a wide variety of systems and aging infrastructure and was undergoing ongoing modernization efforts.
+    - Baltimore faced documented cybersecurity capability and staffing challenges.
+    - External assessments conducted prior to 2019 identified elevated exposure to cyber threats.
+    - Earlier incidents, including a 2018 intrusion affecting the city’s 911 and 311 systems during firewall maintenance, exposed procedural vulnerabilities in system configuration and change-management processes.
+
+
+  triggering_condition_key_events:
+    - In May 2019, RobbinHood ransomware was deployed across portions of Baltimore’s network, rendering multiple municipal systems inaccessible and affecting nearly every department.
+    - The ransomware encrypted files on affected servers and displayed a ransom demand in cryptocurrency.
+    - City employees encountered locked systems, and disruptions occurred across email, phone lines, and online payment platforms.
+    - The city did not maintain continuous cybersecurity monitoring, resulting in several hours passing before the scope of the incident was identified.
+
+
+technical:
+  decision_context:
+    - After confirming that ransomware had compromised servers supporting critical municipal functions, cybersecurity practitioners faced a decision about whether to maintain network connectivity while assessing the scope of the compromise or to proactively disconnect additional systems to limit potential further spread. The decision required determining how to proceed operationally while uncertainty about the extent of the intrusion remained.
+
+  nist_csf_mapping:
+    - function: "Respond (RS)"
+      categories: 
+        - "Mitigation (MI)"
+      rationale: >
+        This decision aligns with the Respond function of the NIST CSF because practitioners
+        had to decide between preserving service continuity or implementing containment
+        measures. Framing the situation through the Respond function clarifies that the
+        operational task at this stage involved determining whether additional isolation was
+        necessary to limit potential impact while system recovery remained ongoing.
+
+
+ethical:
+  tension:
+    - id: T1
+      description: >
+        Preventing further ransomware spread through additional system isolation while maintaining access to essential municipal services relied upon for daily operations.
+
+  
+  pfce_analysis:
+    - principle: "Beneficence"
+      description: >
+        Containment actions were considered as a means of limiting further ransomware spread
+        and reducing potential harm to municipal systems and services.
+    - principle: "Non-maleficence"
+      description: >
+        Disconnecting additional systems introduced the risk of harm through disruption of
+        essential municipal services relied upon by residents and departments.
+    - principle: "Autonomy"
+      description: >
+        System isolation temporarily limited departmental staff’s ability to access or manage
+        systems necessary for routine operational decision-making.
+    - principle: "Justice"
+      description: >
+        Service disruptions affected residents and businesses unevenly, depending on their
+        reliance on timely access to municipal services.
+    - principle: "Explicability"
+      description: >
+        Limited visibility into ransomware propagation constrained practitioners’ ability to
+        justify whether additional system isolation was necessary or overly precautionary.
+
+
+constraints:
+  - The city was in the early stages of transitioning toward centralized technology functions.
+  - IT operations were organized under a decentralized structure, with system administration distributed across departments.
+  - Staffing and resource limitations constrained Baltimore’s cybersecurity capacity.
+  - The city lacked an incident-specific continuity plan, resulting in reliance on ad-hoc workarounds during early recovery efforts.
+
+
+decision_outcome:
+  decision: 
+    - Additional municipal systems were disconnected as a precautionary measure while the scope of the ransomware deployment was assessed.
+
+
+  outcomes_implications:
+    - More than 10,000 city employees lost access to email accounts.
+    - Online payment systems for water bills, property taxes, and vehicle citations were disabled.
+    - Departments implemented manual workarounds, including in-person payment processing and paper recordkeeping.
+    - Real-estate transactions were delayed due to inaccessibility of property records and lien certification systems.
+    - The Department of Public Works was unable to bill over 14,000 customers for sewer charges during the outage.
+    - More than 1,500 home sales were stalled due to lien certification delays.
+    - Recovery progressed unevenly, and the incident contributed to approximately $18.2 million in associated costs.
+    - The scale and duration of service disruptions affected public trust and had downstream implications for institutional legitimacy.

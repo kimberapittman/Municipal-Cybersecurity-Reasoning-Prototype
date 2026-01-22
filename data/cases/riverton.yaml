@@ -1,0 +1,97 @@
+id: "riverton"
+
+title: "CASE 3: RIVERTON – WHEN AI-DRIVEN SECURITY MEETS HUMAN-CENTERED OBLIGATIONS"
+
+ui_title: "City of Riverton – When AI-Driven Security Meets Human-Centered Obligations"
+
+short_summary: >
+  The Riverton water-treatment scenario presents a case in which municipal cybersecurity
+  practitioners confronted a decision involving automated system controls during anomalous
+  network activity. The decision examined in this case centers on whether to maintain
+  AI-imposed operational restrictions or override them to restore full manual control while
+  the integrity of the system remained uncertain.
+
+sources:
+  - "Constructed for this thesis as a hypothetical municipal cybersecurity scenario."
+
+background:
+  technical_operational_background:
+    - The City of Riverton operates a unified water-treatment and distribution network supported by an AI-managed control platform.
+    - The platform autonomously adjusts chemical dosing, pump pressure, and reservoir flow based on sensor feedback.
+    - Algorithms were trained on historical operational data to reduce manual intervention and enhance responsiveness.
+    - Core treatment functions with direct public health implications were partially dependent on automated control.
+    - These operational conditions created reliance on AI-generated classifications for system integrity and safety.
+
+  triggering_condition_key_events:
+    - The AI platform flagged an abrupt deviation in remote-access activity targeting programmable logic controllers.
+    - Because PLCs regulate chemical-treatment functions, the anomaly carried immediate operational significance.
+    - The system classified the deviation as high risk and automatically restricted certain chemical-dosing adjustments.
+    - When operators arrived on shift, portions of the control interface were inaccessible or restricted.
+    - A second alert indicated irregular sensor-feedback patterns associated with potential unauthorized influence.
+    - Although water quality and pressure remained stable, the alerts signaled a possible compromise of the control environment.
+
+technical:
+  decision_context:
+    - Riverton’s cybersecurity staff and plant supervisors had to determine whether to maintain AI-initiated restrictions or restore full operator control.
+    - The AI system had autonomously classified activity as high risk and imposed restrictive actions.
+    - Practitioners were required to decide how the alerts should guide operational posture while analysis continued.
+
+  nist_csf_mapping:
+    - function: "Detect (DE)"
+      categories:
+        - "DE.AE – Adverse Event Analysis"
+        - "DE.CM – Continuous Monitoring"
+      rationale: >
+        This decision aligns with the Detect function of the NIST CSF because practitioners were
+        required to evaluate whether automated alerts reflected malicious activity or benign
+        system irregularities. Framing the situation through Detect clarifies that the
+        operational task involved assessing the significance of alerts rather than initiating
+        containment or mitigation actions.
+
+ethical:
+  tension:
+    - id: "T1"
+      description: >
+        Maintaining AI-imposed restrictions as a precautionary measure to prevent potential
+        harm to public health versus the risk that prolonged restrictions could affect the
+        reliability of water-treatment operations.
+
+  pfce_analysis:
+    - principle: "Beneficence"
+      description: >
+        Maintaining a precautionary operational posture intended to prevent potential harm
+        while the integrity of the control environment remained uncertain.
+    - principle: "Non-maleficence"
+      description: >
+        Prolonged operational restrictions risked affecting the reliability of
+        chemical-treatment processes and introducing downstream harm.
+    - principle: "Autonomy"
+      description: >
+        Operators temporarily lacked full authority to adjust system controls while automated
+        restrictions remained in effect.
+    - principle: "Justice"
+      description: >
+        Any disruption to water-treatment processes could produce uneven downstream effects
+        on communities dependent on consistent service delivery.
+    - principle: "Explicability"
+      description: >
+        Limited insight into how the AI system classified anomalous activity constrained
+        practitioners’ ability to interpret and justify the imposed restrictions.
+
+constraints:
+  - The water utility operated under regulatory requirements governing chemical-treatment processes.
+  - Cybersecurity and utilities teams functioned under parallel authorities.
+  - Diagnostic access to portions of the AI platform required vendor involvement.
+  - Municipal risk-governance policies emphasized precaution in critical infrastructure operations.
+
+
+decision_outcome:
+  decision: 
+    - Following an AI system’s autonomous classification of network activity as high risk and its initiation of restrictive controls, cybersecurity practitioners had to decide whether to maintain AI-imposed restrictions or restore full operator control while further analysis was conducted. The decision focused on how AI-generated alerts should guide operational posture during an ongoing assessment.
+
+  outcomes_implications:
+    - The precautionary posture preserved system safety during uncertainty.
+    - Temporary operational inefficiencies increased staff workload.
+    - Access to the platform’s full range of automated adjustments was restricted.
+    - Continuity of essential municipal services was maintained but under constrained conditions.
+    - The incident shaped perceptions of system reliability and institutional dependability.
