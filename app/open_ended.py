@@ -418,7 +418,6 @@ def render_open_ended():
             unsafe_allow_html=True
         )
 
-        # Optional helper line
         st.markdown(
             """
             <div style="
@@ -435,57 +434,36 @@ def render_open_ended():
 
         selected_stakeholders = []
 
-        # --- Single tile (same visual card as other steps) ---
-        st.markdown(
-            """
-            <div class="listbox walkthrough-tile">
-            <div class="walkthrough-step-title">Stakeholder Identification</div>
-            """,
-            unsafe_allow_html=True,
-        )
+        # Scannable list (NO fixed-height container so "Other" sits directly under the last item)
+        for stakeholder in STAKEHOLDER_OPTIONS:
+            if st.checkbox(stakeholder, key=f"oe_stakeholder_{stakeholder}"):
+                selected_stakeholders.append(stakeholder)
 
-        # Scannable list
-        with st.container(height=260):
-            for stakeholder in STAKEHOLDER_OPTIONS:
-                if st.checkbox(stakeholder, key=f"oe_stakeholder_{stakeholder}"):
-                    selected_stakeholders.append(stakeholder)
+        # "Other" row: checkbox left, textbox right (appears immediately when checked)
+        col_l, col_r = st.columns([1, 2], gap="large")
 
-        # “Other” inside the same tile
-        add_other = st.checkbox(
-            "Other stakeholder(s) not listed",
-            key="oe_stakeholder_other_toggle",
-        )
-
-        other_text = ""
-        if add_other:
-            # Label rendered ABOVE the text area (so the box is underneath, not beside)
-            st.markdown(
-                """
-                <div style="
-                    margin: 0.5rem 0 0.35rem 0;
-                    font-weight: 600;
-                    color: rgba(229,231,235,0.85);
-                ">
-                Other stakeholders (comma-separated)
-                </div>
-                """,
-                unsafe_allow_html=True
+        with col_l:
+            add_other = st.checkbox(
+                "Other stakeholder(s) not listed",
+                key="oe_stakeholder_other_toggle",
             )
 
-            other_text = st.text_area(
-                "Other stakeholders input",
-                key="oe_stakeholder_other_text",
-                height=90,
-                placeholder="Example: Regional 911 dispatch, county emergency management, union representatives",
-                label_visibility="collapsed",
-            ).strip()
+        other_text = ""
+        with col_r:
+            if add_other:
+                other_text = st.text_area(
+                    "Other stakeholders",
+                    key="oe_stakeholder_other_text",
+                    height=80,
+                    placeholder="Example: Regional 911 dispatch, county emergency management, union representatives",
+                    label_visibility="collapsed",
+                ).strip()
+            else:
+                st.empty()
 
-        # Close tile wrapper
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # Parse “Other” into list, combine with selections, de-dupe
+        # Parse “Other” into list (comma-separated), combine, de-dupe
         other_list = [s.strip() for s in other_text.split(",") if s.strip()]
-        combined = list(dict.fromkeys(selected_stakeholders + other_list))  # preserve order, remove dupes
+        combined = list(dict.fromkeys(selected_stakeholders + other_list))
 
         # Persist
         st.session_state["oe_stakeholders"] = combined
