@@ -233,16 +233,6 @@ def _normalize_constraints(raw):
 GOV_CONSTRAINTS = _normalize_constraints(GOV_CONSTRAINTS_RAW)
 
 
-CSF_HINT_KEYWORDS = {
-    "GV": ["policy", "policies", "authority", "approval", "oversight", "governance", "charter", "compliance", "board", "council"],
-    "ID": ["inventory", "inventories", "classify", "classification", "asset", "assets", "dependency", "dependencies", "risk register", "risk assessment"],
-    "PR": ["access", "permission", "privilege", "authorization", "encrypt", "encryption", "credential", "password", "data protection", "control", "controls", "configuration"],
-    "DE": ["monitor", "monitoring", "alert", "alerts", "anomaly", "anomalies", "flagged", "suspicious", "detection", "log review"],
-    "RS": ["disconnect", "isolate", "contain", "mitigate", "shutdown", "shut down", "take offline", "incident response", "triage", "manual control", "disable automation", "block traffic"],
-    "RC": ["restore", "restoration", "rebuild", "recover", "back online", "return to operations", "post-incident review", "lessons learned"],
-}
-
-
 def guess_csf_function(decision_text: str):
     if not decision_text:
         return None
