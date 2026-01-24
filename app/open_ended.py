@@ -224,6 +224,7 @@ def render_open_ended():
     # Render
     _render_open_header(step)                 # <-- one argument
     st.progress(step / float(total_steps))
+    st.markdown("<div style='margin-top:-10px'></div>", unsafe_allow_html=True)
     st.caption(f"Step {step} of {total_steps}")
 
 
