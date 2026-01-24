@@ -140,11 +140,12 @@ def _load_core_data():
 
 OE_STEP_TITLES = {
     1: "Scenario Description",
-    2: "Decision Context Classification",
-    3: "NIST CSF Mapping",
-    4: "PFCE Analysis and Ethical Tension",
-    5: "Institutional and Governance Constraints",
-    6: "Decision (and documented rationale)",
+    2; "Decision Point",
+    3: "Decision Context Classification",
+    4: "NIST CSF Mapping",
+    5: "PFCE Analysis and Ethical Tension",
+    6: "Institutional and Governance Constraints",
+    7: "Decision (and documented rationale)",
 }
 OE_TOTAL_STEPS = len(OE_STEP_TITLES)
 
@@ -422,7 +423,7 @@ def render_open_ended():
                 line-height: 1.45;
             ">
             Describe the situation requiring a decision. Include:
-            <ul class="tight-list" style="margin-bottom: 1rem;">
+            <ul class="tight-list" style="margin-bottom: 0.75rem;">
                 <li>What happened or what is being proposed</li>
                 <li>When the decision must be made</li>
                 <li>What constraints exist (time, resources, information)</li>
@@ -443,9 +444,73 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 2: NIST CSF
+    # STEP 2: Decision Context Classification
     # ==========================================================
-    elif step == 2:
+    if step == 2:
+        # Instruction text above the input
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 6px 0;
+                font-weight: 500;
+                color: rgba(229,231,235,0.90);
+                font-size: 1.05rem;
+                line-height: 1.45;
+            ">
+            What is the specific operational decision being considered?:
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Text box with ONLY guidance as placeholder
+        scenario_description = st.text_area(
+            "Decision Point",
+            key="oe_decision_point",
+            height=120,
+            placeholder="(Example: Whether to further isolate additional network segments to prevent potential ransomware spread.)",
+            label_visibility="collapsed",
+        )
+
+
+    # ==========================================================
+    # STEP 3: Decision Context Classification
+    # ==========================================================
+    if step == 3:
+        # Instruction text above the input
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 6px 0;
+                font-weight: 500;
+                color: rgba(229,231,235,0.90);
+                font-size: 1.05rem;
+                line-height: 1.45;
+            ">
+            What type of decision context best describes the s?:
+            <ul class="tight-list" style="margin-bottom: 0.75rem;">
+                <li>What happened or what is being proposed</li>
+                <li>When the decision must be made</li>
+                <li>What constraints exist (time, resources, information)</li>
+            </ul>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Text box with ONLY guidance as placeholder
+        scenario_description = st.text_area(
+            "Scenario Description",
+            key="oe_scenario_description",
+            height=120,
+            placeholder="(Example: Following a suspected ransomware incident, some municipal systems have been restored while others remain offline. A decision is required on whether to further isolate network segments to limit potential spread, which would disrupt services that are currently functioning. The decision must be made quickly with limited information about the scope of compromise.)",
+            label_visibility="collapsed",
+        )
+
+    # ==========================================================
+    # STEP 3: NIST CSF
+    # ==========================================================
+    elif step == 3:
         # ---------- CSF Function ----------
         with st.container():
             st.markdown('<div class="csf-func-anchor"></div>', unsafe_allow_html=True)
@@ -575,9 +640,9 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 3: PFCE + TENSION
+    # STEP 4: PFCE + TENSION
     # ==========================================================
-    elif step == 3:
+    elif step == 4:
 
         # ---------- PFCE principle triage (multi-select) ----------
         with st.container():
@@ -675,9 +740,9 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 4: CONSTRAINTS
+    # STEP 5: CONSTRAINTS
     # ==========================================================
-    elif step == 4:
+    elif step == 5:
         _render_step_tile_html(
             "Document constraints that shape or limit feasible actions or justification.",
         )
@@ -695,9 +760,9 @@ def render_open_ended():
         )
 
     # ==========================================================
-    # STEP 5: DECISION + OUTPUT 
+    # STEP 6: DECISION + OUTPUT 
     # ==========================================================
-    elif step == 5:
+    elif step == 6:
         _render_step_tile_html(
             "Record the decision in operational terms, then generate a structured rationale for demonstration purposes.",
         )
@@ -874,9 +939,5 @@ def render_open_ended():
                 if st.button("Generate PDF", key="oe_generate_pdf", use_container_width=False):
                     st.session_state["oe_generate"] = True
                     _safe_rerun()
-
-
-
-
 
 
