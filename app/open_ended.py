@@ -180,20 +180,13 @@ def _build_pdf(title: str, lines: list[str]) -> BytesIO:
     buffer.seek(0)
     return buffer
 
-def _render_open_header(step: int, total_steps: int):
+def _render_open_header(step: int):
     step_title = OE_STEP_TITLES.get(step, OE_STEP_TITLES[1])
 
     st.markdown(
         f"""
         <div style="text-align:center; margin-top: 0;">
-          <h2 style="margin: 0 0 0.1rem 0;">{step_title}</h2>
-          <div style="
-            color: rgba(229,231,235,0.70);
-            font-size: 0.95rem;
-            margin: 0 0 0.75rem 0;
-          ">
-            Step {step} of {total_steps}
-          </div>
+          <h2 style="margin: 0 0 0.25rem 0;">{step_title}</h2>
         </div>
         """,
         unsafe_allow_html=True,
@@ -216,6 +209,7 @@ def _render_open_header(step: int, total_steps: int):
         unsafe_allow_html=True,
     )
 
+
 def render_open_ended():
     if "oe_step" not in st.session_state:
         st.session_state["oe_step"] = 1
@@ -223,11 +217,14 @@ def render_open_ended():
     total_steps = OE_TOTAL_STEPS
     step = int(st.session_state["oe_step"])
 
+    # Clamp
     step = max(1, min(step, total_steps))
     st.session_state["oe_step"] = step
 
-    _render_open_header(step, total_steps)
+    # Render
+    _render_open_header(step)                 # <-- one argument
     st.progress(step / float(total_steps))
+    st.caption(f"Step {step} of {total_steps}")
 
 
     # ==========================================================
