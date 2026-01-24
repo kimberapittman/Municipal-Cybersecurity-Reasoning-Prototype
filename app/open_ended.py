@@ -472,7 +472,7 @@ def render_open_ended():
         if combined:
             st.info("Stakeholders identified: **" + ", ".join(combined) + "**")
         else:
-            st.warning("Identify at least one stakeholder (or add one under “Other”) to continue.")
+            st.warning("Identify at least one stakeholder to continue.")
             st.stop()
 
 
