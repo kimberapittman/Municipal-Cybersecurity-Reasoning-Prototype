@@ -12,8 +12,7 @@ if str(ROOT_DIR) not in sys.path:
  
 import streamlit as st
 
-from logic.loaders import load_case
-from app import case_based, open_ended
+from app import open_ended
 
 # ---------- Page config ----------
 st.set_page_config(
@@ -301,6 +300,26 @@ textarea::placeholder {
   color: rgba(229,231,235,0.55);
   font-size: 0.95rem;
 }
+.lp-section{
+  font-weight: 800;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.lp-button-wrap{
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Landing page list indent
+.lp-list{
+  margin-left: 1rem !important;    
+  padding-left: 0.5rem !important; 
+}
 
 /* === OPEN-ENDED STEP 1: EXAMPLES EXPANDER (MATCH OTHER DROPDOWNS) === */
 .oe-example-expander{
@@ -418,206 +437,6 @@ label, .stRadio, .stSelectbox, .stMultiSelect, .stExpander{
 section-note, .tile-hook { color: var(--text-muted) !important; }
 
 
-/* === CASE BADGES === */
-.case-badge-wrap{
-  width:100% !important;
-  display:flex !important;
-  justify-content:center !important;
-  margin: 0 0 10px 0 !important;
-}
-.case-badge{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  font-size:0.85rem !important;
-  font-weight:800 !important;
-  letter-spacing:0.02em !important;
-  padding:8px 14px !important;
-  border-radius:999px !important;
-  white-space: normal !important;
-  text-align: center !important;
-  line-height: 1.45 !important;
-  max-width: 100% !important;
-  flex-wrap: wrap !important;
-  color:#ffffff !important;
-}
-.case-badge.real,
-.case-badge.hypo{
-  border: 1px solid rgba(255,255,255,0.65) !important;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15) !important;
-}
-/* MAIN CONTENT expanders only (exclude sidebar) */
-div[data-testid="stAppViewContainer"]
-:not(section[data-testid="stSidebar"])
-details > summary{
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 12px;
-  padding: 10px 12px;
-  color: var(--text-strong);
-}
-
-
-/* === SELECT A MODE TILE SPACING ==== */
-div[data-testid="stVerticalBlock"]:has(.mode-tiles-anchor)
-.listbox.tile-card.mode-tile{
-  padding: 30px 30px !important;  
-}
-/* Title → hook spacing (same as case tiles) */
-div[data-testid="stVerticalBlock"]:has(.mode-tiles-anchor)
-.listbox.tile-card.mode-tile .tile-title{
-  font-weight: 800 !important;
-  font-size: 1.25rem !important;
-  text-align: center !important;
-  margin: 0 0 20px 0 !important;
-  line-height: 1.45 !important;
-}
-div[data-testid="stVerticalBlock"]:has(.mode-tiles-anchor)
-.listbox.tile-card.mode-tile .tile-hook{
-  text-align: center !important;
-  font-size: 1.25rem !important;
-  margin: 0 0 20px 0 !important;   
-  line-height: 1.45 !important;
-}
-div[data-testid="stVerticalBlock"]:has(.mode-tiles-anchor)
-.listbox.tile-card.mode-tile{
-  overflow: hidden !important;
-}
-/* Expanded body: continuous with summary (no "second tile" look) */
-div[data-testid="stVerticalBlock"]:has(.mode-tiles-anchor)
-.listbox.tile-card.mode-tile details .details-body{
-  margin-top: 0 !important;               
-  padding: 12px 12px !important;
-  background: rgba(255,255,255,0.03) !important;
-  border: 0 !important;                     
-  border-radius: 0 0 12px 12px !important;   
-}
-/* Make summary connect flush into body when open */
-div[data-testid="stVerticalBlock"]:has(.mode-tiles-anchor)
-.listbox.tile-card.mode-tile details[open] > summary{
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-}
-
-
-/* === SELECT A CASE - TILE SPACING ==== */
-/* Tile padding: top and bottom must match */
-div[data-testid="stVerticalBlock"]:has(.case-tiles-anchor)
-.listbox.case-tile{
-  padding: 30px 30px !important;   /* top/bottom symmetry */
-}
-/* Badge → title spacing */
-div[data-testid="stVerticalBlock"]:has(.case-tiles-anchor)
-.listbox.case-tile .case-badge-wrap{
-  margin: 0 0 20px 0 !important;
-}
-/* Title styling + Title → hook spacing */
-div[data-testid="stVerticalBlock"]:has(.case-tiles-anchor)
-.listbox.case-tile .tile-title{
-  font-weight: 800 !important;
-  font-size: 1.25rem !important;
-  text-align: center !important;
-  margin: 0 0 20px 0 !important;   
-  line-height: 1.45 !important;
-}
-/* Hook styling; Hook → bottom spacing comes ONLY from tile padding */
-div[data-testid="stVerticalBlock"]:has(.case-tiles-anchor)
-.listbox.case-tile .tile-hook{
-  text-align: center !important;
-  font-size: 1.25rem !important;
-  margin: 0 0 20px 0 !important;
-  line-height: 1.45 !important;
-}
-div[data-testid="stVerticalBlock"]:has(.case-tiles-anchor)
-.listbox.case-tile{
-  overflow: hidden !important;
-}
-/* === SELECT A CASE – RESPONSIVE TITLE TIGHTENING === */
-@media (max-width: 1100px){
-  div[data-testid="stVerticalBlock"]:has(.case-tiles-anchor)
-  .listbox.case-tile .tile-title{
-    font-size: 1.05rem !important;
-    line-height: 1.45 !important;
-  }
-}
-/* === SELECT A CASE: STACK COLUMNS ON NARROW SCREENS (DESKTOP + SIDEBAR OPEN) === */
-@media (max-width: 1100px){
-  /* Target only the row that contains the case tiles */
-  div[data-testid="stVerticalBlock"]:has(.case-tiles-anchor)
-  div[data-testid="stHorizontalBlock"]{
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 24px !important;
-  }
-
-  /* Ensure each Streamlit column spans full width */
-  div[data-testid="stVerticalBlock"]:has(.case-tiles-anchor)
-  div[data-testid="stColumn"]{
-    width: 100% !important;
-    flex: unset !important;
-  }
-}
-
-/* === TILE HOVER MATCH BUTTONS (Select-a-Mode + Select-a-Case only) === */
-div[data-testid="stVerticalBlock"]:has(:is(.mode-tiles-anchor,.case-tiles-anchor))
-.listbox:hover{
-  transform: translateY(var(--hover-lift)) !important;
-  cursor: pointer !important;
-  box-shadow: var(--hover-shadow-1), var(--hover-shadow-2) !important;
-  border-color: rgba(76,139,245,0.95) !important;
-  filter: brightness(1.05) !important;
-}
-
-div[data-testid="stVerticalBlock"]:has(:is(.mode-tiles-anchor,.case-tiles-anchor))
-.listbox:active{
-  transform: translateY(-1px) !important;
-  box-shadow:
-    0 0 0 1px rgba(76,139,245,0.45),
-    0 8px 16px rgba(76,139,245,0.30) !important;
-}
-
-
-/* === BULLET LISTS INSIDE TILES === */
-.tight-list{ margin: 0.25rem 0 0 1.15rem; padding: 0; }
-.tight-list li{ margin: 6px 0; }
-.tight-list li::marker{ color: var(--text-muted); }
-
-
-/* DETAILS CHEVRON — MODE + CASE TILES (shared) */
-div[data-testid="stVerticalBlock"]:has(:is(.mode-tiles-anchor,.case-tiles-anchor)) details > summary::-webkit-details-marker{
-  display: none !important;
-}
-div[data-testid="stVerticalBlock"]:has(:is(.mode-tiles-anchor,.case-tiles-anchor)) details > summary::marker{
-  content: "" !important;
-}
-div[data-testid="stVerticalBlock"]:has(:is(.mode-tiles-anchor,.case-tiles-anchor)) details > summary{
-  list-style: none !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  margin: 0 !important;
-  padding: 10px 12px !important;
-  padding-left: 34px !important;
-  position: relative !important;
-}
-div[data-testid="stVerticalBlock"]:has(:is(.mode-tiles-anchor,.case-tiles-anchor)) details > summary::before{
-  content: ">";
-  font-weight: 800;
-  display: inline-block;
-  font-size: 1rem;
-  line-height: 1.45;
-  opacity: 0.8;
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%) rotate(0deg);
-  transition: transform .06s ease;
-}
-div[data-testid="stVerticalBlock"]:has(:is(.mode-tiles-anchor,.case-tiles-anchor)) details[open] > summary::before{
-  transform: translateY(-50%) rotate(90deg);
-}
-
-
 /* === HIDE STREAMLIT CHROME === */
 header[data-testid="stHeader"]{ background: transparent; }
 footer, #MainMenu{ visibility: hidden; }
@@ -658,6 +477,7 @@ button[title*="Copy link"]{
 .walkthrough-step-title{
   display: inline-block;     
   font-size: 1.25rem;
+  letter-spacing: 0.02em;
   font-weight: 700;
   line-height: 1.45;
   margin: 0 0 0.6rem 0;
@@ -720,20 +540,11 @@ main{
   pointer-events: none !important;
 }
 
-/* === BASELINE “BLUE RIM” (match buttons) — MODE + CASE TILES ONLY === */
-div[data-testid="stVerticalBlock"]:has(:is(.mode-tiles-anchor,.case-tiles-anchor))
-.listbox{
-  border: 1px solid rgba(76,139,245,0.55) !important;
-  box-shadow:
-    0 0 0 1px rgba(76,139,245,0.35),
-    0 10px 20px rgba(76,139,245,0.35) !important;
-  cursor: pointer !important;
-}
 
 /* === WALKTHROUGH NAV (CB + OE) — CLEAN + RELIABLE === */
 
 /* Scope: only the nav row that contains the anchor */
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stHorizontalBlock"]{
   width: 100% !important;
   display: flex !important;
@@ -743,7 +554,7 @@ div[data-testid="stHorizontalBlock"]{
 }
 
 /* Columns must expand to fill the row */
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stColumn"]{
   flex: 1 1 0 !important;
   width: 100% !important;
@@ -751,7 +562,7 @@ div[data-testid="stColumn"]{
 }
 
 /* Column wrapper must stretch so the lane has space */
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stColumn"] > div{
   flex: 1 1 auto !important;
   width: 100% !important;
@@ -759,21 +570,21 @@ div[data-testid="stColumn"] > div{
 }
 
 /* --- LEFT LANE: pin to left rail (wrapper row axis + inner column axis) --- */
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stHorizontalBlock"]
 div[data-testid="stColumn"]:first-child > div{
   justify-content: flex-start !important;
   padding-left: 0 !important;
 }
 
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stHorizontalBlock"]
 div[data-testid="stColumn"]:first-child{
   padding-left: 0 !important;
 }
 
 /* Left lane true-left align (column flex => align-items controls horizontal) */
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stHorizontalBlock"]
 div[data-testid="stColumn"]:first-child
 div[data-testid="stVerticalBlock"]{
@@ -781,21 +592,21 @@ div[data-testid="stVerticalBlock"]{
 }
 
 /* --- RIGHT LANE: pin to right rail (wrapper row axis + inner column axis) --- */
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stHorizontalBlock"]
 div[data-testid="stColumn"]:last-child > div{
   justify-content: flex-end !important;
   padding-right: 0 !important;
 }
 
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stHorizontalBlock"]
 div[data-testid="stColumn"]:last-child{
   padding-right: 0 !important;
 }
 
 /* Right lane pinned right — actual lane is the inner stVerticalBlock in the right column */
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stHorizontalBlock"]
 div[data-testid="stColumn"]:last-child
 div[data-testid="stVerticalBlock"]{
@@ -807,7 +618,7 @@ div[data-testid="stVerticalBlock"]{
 }
 
 /* Keep nav buttons pill-sized */
-div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
 div[data-testid="stButton"] > button{
   width: auto !important;
   min-width: unset !important;
@@ -820,13 +631,13 @@ div[data-testid="stVerticalBlock"]:has(.walkthrough-scope){
 
 /* Stack only when truly narrow */
 @media (max-width: 520px){
-  div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+  div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
   div[data-testid="stColumn"] > div{
     justify-content: stretch !important;
   }
 
   /* On narrow screens, don't force right-pin; let buttons go full-width */
-  div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+  div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
   div[data-testid="stHorizontalBlock"]
   div[data-testid="stColumn"]:last-child
   div[data-testid="stVerticalBlock"]{
@@ -834,7 +645,7 @@ div[data-testid="stVerticalBlock"]:has(.walkthrough-scope){
     align-items: stretch !important;
   }
 
-  div[data-testid="stVerticalBlock"]:has(:is(.cb-nav-anchor,.oe-nav-anchor))
+  div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
   div[data-testid="stButton"] > button{
     width: 100% !important;
     min-width: 100% !important;
@@ -973,211 +784,60 @@ def render_disclaimer_footer():
 def _render_landing_page():
     st.markdown(
         """
-    <div style='text-align:center; margin-top: 0; margin-bottom: 0;'>
-    <h2 style='margin:0 0 0.1rem 0; display:inline-block;'>
-        Select a Mode
-    </h2>
-    </div>
+        <div class="listbox walkthrough-tile landing-tile">
+          <div style="text-align:center;">
+            <div class="walkthrough-step-title">Before You Begin</div>
+          </div>
 
-    <div class="mode-tiles">
-      <div class="mode-tiles-anchor"></div>
-    </div>
+          <div class="lp-section">Purpose of the Tool</div>
+          <ul class="tight-list lp-list">
+            <li>Provides a structured reasoning tool for municipal cybersecurity decision-makers</li>
+            <li>Supports decisions where technical considerations and ethical obligations intersect</li>
+            <li>Makes stakeholders, trade-offs, and competing obligations explicit at the point of decision</li>
+          </ul>
+
+          <div class="lp-section">How the Tool Supports Reasoning</div>
+          <ul class="tight-list lp-list">
+            <li>Guides you through a step-by-step reasoning sequence focused on a specific cybersecurity decision</li>
+            <li>Uses the NIST Cybersecurity Framework (CSF) 2.0 to situate the technical context</li>
+            <li>Uses the Principlist Framework for Cybersecurity Ethics (PFCE) to surface ethically significant considerations</li>
+            <li>Supports deliberate examination of trade-offs and tensions when obligations cannot be fully satisfied at the same time</li>
+            <li>Produces a documented record of reasoning explaining what was decided and why</li>
+          </ul>
+
+          <div class="lp-section">What the Tool Does Not Do</div>
+          <ul class="tight-list lp-list">
+            <li>Recommend, rank, or weigh actions</li>
+            <li>Determine the “correct” decision</li>
+            <li>Replace policy, legal guidance, or professional judgment</li>
+          </ul>
+
+          <div class="lp-btn-anchor"></div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
-
-    col1, col2 = st.columns(2, gap="large")
-
-    with col1:
-        st.markdown(
-            html_block(
-                """
-                <a href="?mode=Case-Based&start=walkthrough" target="_self"
-                  style="text-decoration:none; color: inherit; display:block;">
-                  <div class="listbox tile-card mode-tile" style="cursor:pointer;">
-
-                    <div class="tile-title">Case-Based Mode</div>
-
-                    <div class="tile-hook">Explore the tool through reconstructed municipal cybersecurity cases.</div>
-
-
-                    <!-- Collapsible details (inside tile) -->
-                    <details onclick="event.stopPropagation();">
-                      <summary style="user-select:none;" onclick="event.stopPropagation();">
-                        About Case-Based Mode
-                      </summary>
-
-                      <div class="details-body">
-                        <div class="mode-detail-text">
-                          Uses reconstructed municipal cybersecurity cases to demonstrate the tool’s stepwise reasoning process:
-                        </div>
-
-                        <ul class="tight-list">
-                          <li>Two real-world municipal incidents and one purpose-built hypothetical scenario</li>
-                          <li>Examines both retrospective incidents and forward-looking decision contexts</li>
-                          <li>Shows how technical and ethical reasoning unfold across a full decision process</li>
-                          <li>Establishes a shared reference point for how the tool is applied in practice</li>
-                          <li>Informed the structure and logic of the Open-Ended Mode</li>
-                        </ul>
-                      </div>
-                    </details>
-
-                    </div>
-                  </a>
-                  """
-              ),
-              unsafe_allow_html=True,
-          )
-
-    with col2:
-        st.markdown(
-            html_block(
-                """
-                <a href="?mode=Open-Ended&start=walkthrough" target="_self"
-                  style="text-decoration:none; color: inherit; display:block;">
-                  <div class="listbox tile-card mode-tile" style="cursor:pointer;">
-
-                    <div class="tile-title">Open-Ended Mode</div>
-
-                    <div class="tile-hook">Apply the tool to a cybersecurity decision context you define.</div>
-
-                    <!-- Collapsible details (inside tile) -->
-                    <details onclick="event.stopPropagation();">
-                      <summary style="user-select:none;" onclick="event.stopPropagation();">
-                        About Open-Ended Mode
-                      </summary>
-
-                      <div class="details-body">
-                        <div class="mode-detail-text">
-                          Applies the tool’s stepwise reasoning process to a user-defined cybersecurity decision context:
-                        </div>
-
-                        <ul class="tight-list">
-                          <li>upports real-time examination of active or hypothetical decisions</li>
-                          <li>Situates decisions within their technical, ethical, and institutional context</li>
-                          <li>Structures ethical reasoning without prescribing actions or outcomes</li>
-                          <li>Generates a structured record of the reasoning used to support transparency</li>
-                        </ul>
-                      </div>
-                    </details>
-
-                  </div>
-                </a>
-                """
-            ),
-            unsafe_allow_html=True,
-        )
-
-    # --- Auto-scroll when opening "About" dropdowns on landing page ---
-    st.markdown("""
-<script>
-(function () {
-  const FOOTER_H = 56;   // match --disclaimer-h
-  const PAD = 14;
-
-  function isScrollable(el) {
-    if (!el) return false;
-    const s = getComputedStyle(el);
-    const oy = s.overflowY;
-    return (oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight + 2;
-  }
-
-  function getScrollParent(el) {
-    let p = el;
-    while (p && p !== document.body) {
-      if (isScrollable(p)) return p;
-      p = p.parentElement;
-    }
-    const main = document.querySelector('section[data-testid="stMain"]');
-    if (isScrollable(main)) return main;
-    return window;
-  }
-
-  function scrollIntoViewSmart(target) {
-    if (!target) return;
-
-    const scroller = getScrollParent(target);
-    const isWindow = (scroller === window);
-
-    const rect = target.getBoundingClientRect();
-    const visibleBottom = window.innerHeight - FOOTER_H - PAD;
-
-    // If bottom is below visible viewport (above footer), scroll down
-    const down = rect.bottom - visibleBottom;
-    if (down > 4) {
-      if (isWindow) window.scrollBy({ top: down, behavior: "smooth" });
-      else scroller.scrollBy({ top: down, behavior: "smooth" });
-    }
-  }
-
-  function wire(root) {
-    if (!root) return;
-    root.querySelectorAll("details").forEach(d => {
-      if (d.__autoScrollWired) return;
-      d.__autoScrollWired = true;
-
-      d.addEventListener("toggle", () => {
-        if (!d.open) return;
-
-        // wait for layout expansion
-        let tries = 0;
-        const tick = () => {
-          tries += 1;
-          scrollIntoViewSmart(d);
-          if (tries < 6) requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      });
-    });
-  }
-
-  function findRoot() {
-    return document.querySelector(".mode-tiles")
-      || document.querySelector('div[data-testid="stVerticalBlock"]:has(.mode-tiles-anchor)');
-  }
-
-  // Initial wire
-  wire(findRoot());
-
-  // Light-touch rewire on rerender (no DOM mutation)
-  const obs = new MutationObserver(() => wire(findRoot()));
-  obs.observe(document.body, { childList: true, subtree: true });
-})();
-</script>
-    """, unsafe_allow_html=True)
+    # Button rendered by Streamlit (keeps your exact button styling)
+    btn_col = st.columns([1, 1, 1])[1]
+    with btn_col:
+        if st.button("Begin Reasoning Process", key="begin_reasoning"):
+            st.session_state["landing_complete"] = True
+            st.session_state["oe_step"] = 1
+            st.rerun()
 
 
 def render_app_header(show_banner: bool = True):
     # --- Back buttons (secondary nav) ---
     show_back = st.session_state.get("landing_complete", False)
 
-    in_case_select = (
-        st.session_state.get("active_mode") == "Case-Based"
-        and st.session_state.get("cb_view") == "select"
-    )
-    in_case_walkthrough = (st.session_state.get("cb_view") == "walkthrough")
-    in_open_ended = (st.session_state.get("active_mode") == "Open-Ended")
+    in_open_ended = st.session_state.get("oe_step", 0) > 0
 
-    if show_back and (in_case_select or in_case_walkthrough or in_open_ended):
-        st.markdown('<div class="header-nav-anchor"></div>', unsafe_allow_html=True)
-
-        if in_case_walkthrough:
-            if st.button("← Back to Case Selection", key="back_to_cases", type="secondary"):
-                st.session_state["cb_view"] = "select"
-                st.session_state.pop("cb_step", None)
-                st.session_state.pop("cb_step_return", None)
-                st.rerun()
-        else:
-            if st.button("← Back to Mode Selection", key="back_to_modes", type="secondary"):
-                st.session_state["landing_complete"] = False
-                st.session_state.pop("cb_view", None)
-                st.session_state.pop("cb_case_id", None)
-                st.session_state.pop("cb_prev_case_id", None)
-                st.session_state.pop("cb_step", None)
-                st.session_state.pop("cb_step_return", None)
-                st.session_state.pop("oe_step", None)
-                st.rerun()
+    if st.session_state.get("landing_complete", False) and in_open_ended:
+        if st.button("← Back to Start", key="back_to_start", type="secondary"):
+            st.session_state["landing_complete"] = False
+            st.session_state["oe_step"] = 0
+            st.rerun()
 
     # --- Tool banner (select pages only) ---
     if show_banner:
@@ -1185,8 +845,6 @@ def render_app_header(show_banner: bool = True):
             """
             <div style='text-align:center;'>
               <h1>🛡️ Municipal Cybersecurity Reasoning Tool</h1>
-              <div style="font-size:2.0rem; font-weight:800; letter-spacing:0.01em; color:#4C8BF5; margin-top:0.25rem;">
-                What's Secure Isn't Always What's Right.
               </div>
             </div>
             """,
@@ -1216,56 +874,21 @@ def main():
     if "landing_complete" not in st.session_state:
         st.session_state["landing_complete"] = False
 
-    if "active_mode" not in st.session_state:
-        st.session_state["active_mode"] = "Case-Based"
-
-    if st.session_state.get("active_mode") == "Case-Based" and "cb_view" not in st.session_state:
-        st.session_state["cb_view"] = "select"
+    if "oe_step" not in st.session_state:
+        st.session_state["oe_step"] = 0
 
     _open_sidebar_once()
 
     # ---------- URL PARAM MODE ENTRY (tile click) ----------
     try:
         qp = st.query_params
-
-        mode_qp = qp.get("mode", None)
         start_qp = qp.get("start", None)
-        cb_case_id_qp = qp.get("cb_case_id", None)
 
-        # If a case was clicked, force Case-Based walkthrough for that case
-        if cb_case_id_qp:
-            st.session_state["active_mode"] = "Case-Based"
+        if start_qp == "walkthrough":
             st.session_state["landing_complete"] = True
-
-            st.session_state["cb_case_id"] = cb_case_id_qp
-            st.session_state["cb_prev_case_id"] = cb_case_id_qp
-
-            st.session_state["cb_view"] = "walkthrough"
-            st.session_state["cb_step"] = 1
-            st.session_state.pop("cb_step_return", None)
-
-            try:
-                st.query_params.clear()
-            except Exception:
-                pass
-
-        # Otherwise, handle your existing mode tiles
-        elif mode_qp in ("Case-Based", "Open-Ended"):
-            st.session_state["active_mode"] = mode_qp
-            st.session_state["landing_complete"] = True
-
-            if start_qp == "walkthrough":
-                if mode_qp == "Case-Based":
-                    st.session_state["cb_view"] = "select"
-                else:
-                    if st.session_state.get("oe_step", 0) == 0:
-                        st.session_state["oe_step"] = 1
-
-            try:
-                st.query_params.clear()
-            except Exception:
-                pass
-
+            if st.session_state.get("oe_step", 0) == 0:
+                st.session_state["oe_step"] = 1
+            st.query_params.clear()
     except Exception:
         pass
 
@@ -1354,7 +977,7 @@ def main():
                   <div class="sb-details-body">
 
                     <div class="sb-p">
-                      The ethical and technical reasoning structure is informed by two established frameworks:                   
+                      This tool draws on two established frameworks that inform how cybersecurity decisions are structured and examined:                   
                     </div>
 
                     <div class="sb-ref-list">
@@ -1400,17 +1023,14 @@ def main():
 
 
     # ---------- HEADER ----------
-    in_case_walkthrough = st.session_state.get("cb_view") == "walkthrough"
-    in_open_walkthrough = st.session_state.get("oe_step", 0) > 0
-    in_any_walkthrough = in_case_walkthrough or in_open_walkthrough
+    in_walkthrough = st.session_state.get("oe_step", 0) > 0
+    render_app_header(show_banner=not in_walkthrough)
 
-    # Banner only on select pages
-    render_app_header(show_banner=not in_any_walkthrough)
 
     # Divider rules:
     # - Always show divider on select pages (under banner)
     # - On Open-Ended walkthrough, main.py must show divider under the step title (which will be in open_ended.py or main)
-    if not in_any_walkthrough:
+    if not in_walkthrough:
         render_divider()
 
 
@@ -1420,26 +1040,8 @@ def main():
         render_disclaimer_footer()
         return
     
-    # ---------- ACTIVE MODE ----------
-    mode = st.session_state.get("active_mode", "Case-Based")
-
-    if mode == "Case-Based" and "cb_view" not in st.session_state:
-        st.session_state["cb_view"] = "select"
-
-    # ---------- ROUTING ----------
-    if mode == "Case-Based":
-        case_based.render_case(st.session_state.get("cb_case_id"))
-    else:
-        open_ended.render_open_ended()
-
-    # ---------- DISCLAIMER (ONLY ON SELECTION SCREENS) ----------
-    show_disclaimer = (
-        st.session_state.get("active_mode") == "Case-Based"
-        and st.session_state.get("cb_view") == "select"
-    )
-
-    if show_disclaimer:
-        render_disclaimer_footer()
+    # ---------- ACTIVE WORKFLOW ----------
+    open_ended.render_open_ended()
 
 
 if __name__ == "__main__":

@@ -46,6 +46,37 @@ def render_divider():
         unsafe_allow_html=True,
     )
 
+def render_open_ended():
+    step = st.session_state.get("oe_step", 1)
+
+    STEP_TITLES = {
+        1: "Decision Context",
+        2: "Technical Context (NIST CSF)",
+        3: "Ethical Considerations",
+        4: "Institutional and Governance Constraints",
+        5: "Decision and Rationale",
+    }
+
+    step_title = STEP_TITLES.get(step, "Decision Context")
+
+    st.markdown(
+        f"""
+        <div style="margin-bottom: 0.75rem;">
+          <div style="
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #e5e7eb;
+          ">
+            Step {step} — {step_title}
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # ---- rest of your step rendering logic below ----
+
+
 def csf_section_open(title: str, subtitle: str):
     st.markdown(
         f"""
