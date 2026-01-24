@@ -46,22 +46,6 @@ def render_divider():
     )
 
 
-    st.markdown(
-        f"""
-        <div style="margin-bottom: 0.75rem;">
-          <div style="
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #e5e7eb;
-          ">
-            Step {step} — {step_title}
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def csf_section_open(title: str, subtitle: str):
     st.markdown(
         f"""
@@ -379,30 +363,39 @@ def _render_open_header(step: int):
         """,
         unsafe_allow_html=True,
     )
+
+
 def render_open_ended():
     # ==========================================================
-    # WALKTHROUGH STATE (single flow, no gate)
+    # WALKTHROUGH STATE
     # ==========================================================
     if "oe_step" not in st.session_state:
         st.session_state["oe_step"] = 1
-    step = st.session_state["oe_step"]
+    step = int(st.session_state["oe_step"])
 
     total_steps = OE_TOTAL_STEPS
 
-    _render_open_header(step)
-    st.progress(step / float(total_steps))
-    st.caption(f"Step {step} of {total_steps}")
+    # ==========================================================
+    # STEP HEADER + PROGRESS
+    # ==========================================================
+    _render_open_header(step)                 # single source of truth for step title
+    st.progress(step / float(total_steps))    # keep
+    # st.caption(f"Step {step} of {total_steps}")  # remove or keep, but not both styles of header
 
-    def _render_step_tile_html(title: str, body_html: str):
+    # ==========================================================
+    # TILE HELPER (safe)
+    # ==========================================================
+    def _render_step_tile_html(title: str, body_html: str = ""):
         st.markdown(
             f"""
             <div class="listbox walkthrough-tile">
-            <div class="walkthrough-step-title">{title}</div>
-            {body_html}
+              <div class="walkthrough-step-title">{title}</div>
+              {body_html}
             </div>
             """,
             unsafe_allow_html=True,
         )
+
 
     # ==========================================================
     # STEP 1: Scenario Description
