@@ -403,7 +403,6 @@ def render_open_ended():
     # STEP 4: STAKEHOLDER IDENTIFICATION
     # ==========================================================
     elif step == 4:
-        # Instruction header (same pattern as Step 3)
         st.markdown(
             """
             <div style="
@@ -419,6 +418,7 @@ def render_open_ended():
             unsafe_allow_html=True
         )
 
+        # Optional helper line
         st.markdown(
             """
             <div style="
@@ -427,7 +427,7 @@ def render_open_ended():
                 color: rgba(229,231,235,0.65);
                 line-height: 1.4;
             ">
-            Select all that apply. These may include operational, governance, public, or external stakeholders.
+            Select all that apply. If a stakeholder is missing, add it under “Other.”
             </div>
             """,
             unsafe_allow_html=True
@@ -435,16 +435,22 @@ def render_open_ended():
 
         selected_stakeholders = []
 
-        # Scannable checkbox list (mirrors PFCE / Step 3 style)
-        with st.container(height=300):
+        # --- Single tile (same visual card as other steps) ---
+        st.markdown(
+            """
+            <div class="listbox walkthrough-tile">
+            <div class="walkthrough-step-title">Stakeholder Identification</div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Scannable list
+        with st.container(height=260):
             for stakeholder in STAKEHOLDER_OPTIONS:
-                if st.checkbox(
-                    stakeholder,
-                    key=f"oe_stakeholder_{stakeholder}",
-                ):
+                if st.checkbox(stakeholder, key=f"oe_stakeholder_{stakeholder}"):
                     selected_stakeholders.append(stakeholder)
 
-        # Optional "Other" stakeholders
+        # “Other” inside the same tile
         add_other = st.checkbox(
             "Other stakeholder(s) not listed",
             key="oe_stakeholder_other_toggle",
@@ -452,31 +458,43 @@ def render_open_ended():
 
         other_text = ""
         if add_other:
+            # Label rendered ABOVE the text area (so the box is underneath, not beside)
+            st.markdown(
+                """
+                <div style="
+                    margin: 0.5rem 0 0.35rem 0;
+                    font-weight: 600;
+                    color: rgba(229,231,235,0.85);
+                ">
+                Other stakeholders (comma-separated)
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
             other_text = st.text_area(
-                "Other stakeholders",
+                "Other stakeholders input",
                 key="oe_stakeholder_other_text",
                 height=90,
-                placeholder="Example: Regional 911 dispatch, county emergency management, school district IT, union representatives…",
+                placeholder="Example: Regional 911 dispatch, county emergency management, union representatives",
                 label_visibility="collapsed",
             ).strip()
 
-        other_list = [s.strip() for s in other_text.split(",") if s.strip()]
-        combined_stakeholders = list(dict.fromkeys(selected_stakeholders + other_list))
+        # Close tile wrapper
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        # Persist clean, combined output
-        st.session_state["oe_stakeholders"] = combined_stakeholders
+        # Parse “Other” into list, combine with selections, de-dupe
+        other_list = [s.strip() for s in other_text.split(",") if s.strip()]
+        combined = list(dict.fromkeys(selected_stakeholders + other_list))  # preserve order, remove dupes
+
+        # Persist
+        st.session_state["oe_stakeholders"] = combined
 
         # Feedback + gating
-        if combined_stakeholders:
-            st.info(
-                "Stakeholders identified: **"
-                + ", ".join(combined_stakeholders)
-                + "**"
-            )
+        if combined:
+            st.info("Stakeholders identified: **" + ", ".join(combined) + "**")
         else:
-            st.warning(
-                "Identify at least one stakeholder (or add one under “Other”) to continue."
-            )
+            st.warning("Identify at least one stakeholder (or add one under “Other”) to continue.")
             st.stop()
 
 
