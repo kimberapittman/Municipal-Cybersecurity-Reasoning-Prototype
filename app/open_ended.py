@@ -149,59 +149,6 @@ PFCE_PROMPTS = {
 }
 
 
-def _index_csf(csf_raw):
-    if isinstance(csf_raw, dict):
-        functions = csf_raw.get("functions", []) or []
-    elif isinstance(csf_raw, list):
-        functions = csf_raw
-    else:
-        functions = []
-
-    cats_by_func = {}
-    subs_by_cat = {}
-    cat_desc_by_id = {}  # NEW
-
-    for fn in functions:
-        func_id = fn.get("id")
-        if not func_id:
-            continue
-
-        categories = fn.get("categories", []) or []
-        cat_tuples = []
-
-        for cat in categories:
-            cat_id = cat.get("id")
-            if not cat_id:
-                continue
-
-            cat_title = cat.get("title") or cat.get("name") or ""
-            cat_label = f"{cat_id} – {cat_title}" if cat_title else cat_id
-            cat_tuples.append((cat_id, cat_label))
-
-            # NEW: store the category description (for pre-selection help)
-            cat_desc_by_id[cat_id] = (cat.get("description") or "").strip()
-
-            outcomes = cat.get("outcomes") or cat.get("subcategories") or []
-            sub_tuples = []
-
-            for item in outcomes:
-                sub_id = item.get("id")
-                if not sub_id:
-                    continue
-
-                desc = (item.get("outcome") or item.get("description") or "").strip()
-                sub_tuples.append((sub_id, desc if desc else sub_id))
-
-            subs_by_cat[cat_id] = sub_tuples
-
-        cats_by_func[func_id] = cat_tuples
-
-    return cats_by_func, subs_by_cat, cat_desc_by_id
-
-
-CATS_BY_FUNC, SUBS_BY_CAT, CAT_DESC_BY_ID = _index_csf(CSF_DATA)
-
-
 def _build_pdf(title: str, lines: list[str]) -> BytesIO:
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=LETTER)
@@ -401,125 +348,6 @@ def render_open_ended():
                 "Within your current decision context, where are you operating in the cybersecurity process?"
             )
 
-            codes_list = ["GV", "ID", "PR", "DE", "RS", "RC"]
-
-            selected_code = st.radio(
-                "Select the description that best matches your situation:",
-                options=codes_list,
-                index=None,
-                key="oe_csf_choice_step2",
-                format_func=lambda c: CSF_FUNCTION_OPTIONS[c]["prompt"],
-            )
-
-            prev_func = st.session_state.get("oe_csf_function")
-            if selected_code is not None and selected_code != prev_func:
-                st.session_state["oe_csf_category"] = None
-                st.session_state["oe_csf_subcategories"] = []
-
-            if selected_code is None:
-                csf_section_close()
-                st.stop()
-
-            st.session_state["oe_csf_function"] = selected_code
-            st.session_state["oe_csf_function_label"] = CSF_FUNCTION_OPTIONS[selected_code]["label"]
-
-            st.info(
-                f"Based on your selection, your NIST CSF Function is: "
-                f"**{st.session_state['oe_csf_function_label']}**"
-            )
-
-            csf_section_close()
-
-
-        # ---------- CSF Category (subordinate) ----------
-        selected_func_id = st.session_state.get("oe_csf_function")
-
-        with st.container():
-            st.markdown('<div class="csf-cat-anchor"></div>', unsafe_allow_html=True)
-
-            csf_section_open(
-                "NIST CSF Category",
-                f"Within the {st.session_state['oe_csf_function_label']} function, what kind of work or concern is this decision about?"
-            )
-
-            cat_options = CATS_BY_FUNC.get(selected_func_id, [])
-            cat_ids = [cid for cid, _ in cat_options]
-            cat_labels = {cid: lbl for cid, lbl in cat_options}
-
-            current_cat = st.session_state.get("oe_csf_category")
-            if current_cat not in cat_ids:
-                st.session_state["oe_csf_category"] = None 
-
-
-            selected_cat_id = st.radio(
-                "Select the CSF category that best fits this decision:",
-                options=cat_ids,
-                index=None,
-                key="oe_csf_category",
-                format_func=lambda cid: cat_labels.get(cid, cid),
-            )
-
-
-            with st.expander("Preview category descriptions (optional)"):
-                for cid in cat_ids:
-                    st.markdown(f"**{cat_labels.get(cid, cid)}**")
-                    desc = CAT_DESC_BY_ID.get(cid, "")
-                    if desc:
-                        st.caption(desc)
-                    else:
-                        st.caption("—")
-
-
-            if selected_cat_id is None:
-                csf_section_close()
-                st.stop()
-
-            csf_section_close()
-
-        # ---------- Subcategory outcomes ----------
-        with st.container():
-            st.markdown('<div class="csf-sub-anchor"></div>', unsafe_allow_html=True)
-
-            csf_section_open(
-                "NIST CSF Subcategory",
-                "Select all outcomes that are directly implicated by this decision."
-            )
-
-            subs = SUBS_BY_CAT.get(selected_cat_id, [])
-            selected_sub_ids = []
-
-            with st.container(height=320):
-                for sid, label in subs:
-                    if st.checkbox(f"**{sid}** — {label}", key=f"oe_sub_{sid}"):
-                        selected_sub_ids.append(sid)
-
-            st.session_state["oe_csf_subcategories"] = selected_sub_ids
-
-            if not selected_sub_ids:
-                st.warning("Select at least one CSF subcategory outcome to complete your CSF mapping.")
-                csf_section_close()
-                st.stop()
-
-
-        # ---------- CSF mapping summary (end-of-step confirmation) ----------
-        func_label = st.session_state.get("oe_csf_function_label", "—")
-
-        # Build a global category label map (safe at end of Step 2)
-        cat_labels_all = {cid: lbl for _, cats in CATS_BY_FUNC.items() for cid, lbl in cats}
-        cat_id = st.session_state.get("oe_csf_category")
-        cat_label = cat_labels_all.get(cat_id, cat_id) if cat_id else "—"
-
-        sub_ids = st.session_state.get("oe_csf_subcategories", []) or []
-
-        st.info(
-            "**NIST CSF 2.0 mapping complete**\n\n"
-            f"**Function:** {func_label}\n\n"
-            f"**Category:** {cat_label}\n\n"
-            f"**Subcategory outcomes selected:** {len(sub_ids)}\n\n"
-            f"**Subcategory IDs:** {', '.join(sub_ids)}"
-        )
-
-
     # ==========================================================
     # STEP 5: PFCE + TENSION
     # ==========================================================
@@ -649,18 +477,6 @@ def render_open_ended():
             placeholder="Example: Disconnect additional systems while confirming scope; preserve critical service workflows via manual workarounds.",
         )
 
-
-        pdf = _build_pdf(
-            "Decision Rationale (Open-Ended Mode)",
-            [ln for ln in lines if ln is not None and ln != ""],
-        )
-
-        st.download_button(
-            "Download decision rationale (PDF)",
-            data=pdf,
-            file_name="decision_rationale_open_ended.pdf",
-            mime="application/pdf",
-        )
 
     # NAV CONTROLS
     with st.container():
