@@ -231,7 +231,6 @@ div[data-testid="stButton"] > button:not([kind="secondary"]){
     0 0 0 1px rgba(76,139,245,0.35),
     0 10px 20px rgba(76,139,245,0.35) !important;
   transition: transform .06s ease, box-shadow .15s ease, filter .15s ease !important;
-  white-space: nowrap !important;
 }
 div[data-testid="stButton"] > button:not([kind="secondary"]):hover{
   transform: translateY(-3px) !important;
@@ -255,7 +254,6 @@ div[data-testid="stButton"] > button[kind="secondary"]{
     0 0 0 1px rgba(76,139,245,0.35),
     0 10px 20px rgba(76,139,245,0.35) !important;
   transition: transform .06s ease, box-shadow .15s ease, filter .15s ease !important;
-  white-space: nowrap !important;
 }
 div[data-testid="stButton"] > button[kind="secondary"]:hover{
   transform: translateY(-3px) !important;
@@ -477,7 +475,7 @@ button[title*="Copy link"]{
 .walkthrough-step-title{
   display: inline-block;     
   font-size: 1.25rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   font-weight: 700;
   line-height: 1.45;
   margin: 0 0 0.6rem 0;
@@ -636,6 +634,15 @@ div[data-testid="stVerticalBlock"]:has(.walkthrough-scope){
     justify-content: stretch !important;
   }
 
+@media (max-width: 520px){
+  div[data-testid="stButton"] > button{
+    white-space: normal !important;     /* allow wrap */
+    text-align: center !important;
+    line-height: 1.2 !important;
+    padding: 0.7rem 1rem !important;
+  }
+}
+
   /* On narrow screens, don't force right-pin; let buttons go full-width */
   div[data-testid="stVerticalBlock"]:has(:is(.oe-nav-anchor))
   div[data-testid="stHorizontalBlock"]
@@ -649,6 +656,7 @@ div[data-testid="stVerticalBlock"]:has(.walkthrough-scope){
   div[data-testid="stButton"] > button{
     width: 100% !important;
     min-width: 100% !important;
+    max-width: 100% !imortant;
   }
 }
 
