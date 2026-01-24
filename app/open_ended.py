@@ -5,6 +5,7 @@ from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import LETTER
 import textwrap
+import html
 
 
 def _safe_rerun():
@@ -181,7 +182,7 @@ def _build_pdf(title: str, lines: list[str]) -> BytesIO:
     return buffer
 
 def _render_open_header(step: int):
-    step_title = OE_STEP_TITLES.get(step, OE_STEP_TITLES[1])
+    step_title = html.escape(OE_STEP_TITLES.get(step) or OE_STEP_TITLES.get(1, "Step"))
 
     st.markdown(
         f"""
@@ -217,16 +218,26 @@ def render_open_ended():
     total_steps = OE_TOTAL_STEPS
     step = int(st.session_state["oe_step"])
 
-    # Clamp
     step = max(1, min(step, total_steps))
     st.session_state["oe_step"] = step
 
-    # Render
-    _render_open_header(step)                 # <-- one argument
+    _render_open_header(step)
     st.progress(step / float(total_steps))
-    st.markdown("<div style='margin-top:-10px'></div>", unsafe_allow_html=True)
-    st.caption(f"Step {step} of {total_steps}")
 
+    st.markdown(
+        f"""
+        <div style="
+            margin-top: -12px;
+            font-size: 0.85rem;
+            color: rgba(229,231,235,0.75);
+            text-align: center;
+        ">
+            Step {step} of {total_steps}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
 
     # ==========================================================
     # TILE HELPER (safe)
