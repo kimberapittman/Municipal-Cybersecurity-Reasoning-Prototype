@@ -6,13 +6,6 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import LETTER
 import textwrap
 
-from logic.loaders import (
-    load_csf_data,
-    load_pfce_principles,
-    load_constraints,
-)
-from logic.reasoning import summarize_pfce
-
 
 def _safe_rerun():
     try:
@@ -111,13 +104,6 @@ CSF_FUNCTION_OPTIONS = {
 }
 
 
-@st.cache_data
-def _load_core_data():
-    csf = load_csf_data()
-    pfce = load_pfce_principles()
-    constraints = load_constraints()
-    return csf, pfce, constraints
-
 OE_STEP_TITLES = {
     1: "Scenario Description",
     2: "Decision Point",
@@ -128,10 +114,6 @@ OE_STEP_TITLES = {
     7: "Decision (and documented rationale)",
 }
 OE_TOTAL_STEPS = len(OE_STEP_TITLES)
-
-
-CSF_DATA, PFCE_PRINCIPLES, GOV_CONSTRAINTS_RAW = _load_core_data()
-PFCE_NAMES = [p.get("name", "") for p in PFCE_PRINCIPLES if p.get("name")]
 
 
 PFCE_DEFINITIONS = {
@@ -218,81 +200,6 @@ def _index_csf(csf_raw):
 
 
 CATS_BY_FUNC, SUBS_BY_CAT, CAT_DESC_BY_ID = _index_csf(CSF_DATA)
-
-
-def _normalize_constraints(raw):
-    if isinstance(raw, list):
-        return [str(x) for x in raw]
-    if isinstance(raw, dict):
-        if isinstance(raw.get("constraints"), list):
-            return [str(x) for x in raw["constraints"]]
-        return [str(v) for v in raw.values()]
-    return []
-
-
-GOV_CONSTRAINTS = _normalize_constraints(GOV_CONSTRAINTS_RAW)
-
-
-def guess_csf_function(decision_text: str):
-    if not decision_text:
-        return None
-
-    text = decision_text.lower()
-    scores = {fn: 0 for fn in CSF_HINT_KEYWORDS.keys()}
-
-    for fn, keywords in CSF_HINT_KEYWORDS.items():
-        for kw in keywords:
-            if kw in text:
-                scores[fn] += 1
-
-    if all(score == 0 for score in scores.values()):
-        return None
-
-    return max(scores, key=scores.get)
-
-
-TRIGGER_EXAMPLE_OPTIONS = [
-    "Example (Baltimore): Ransomware deployed across municipal systems; service disruption and containment decisions.",
-    "Example (San Diego): Smart streetlight footage accessed for law-enforcement use beyond documented program scope.",
-    "Example (Riverton): AI system flagged anomalous control activity; imposed restrictions pending review."
-]
-
-TRIGGER_TYPE_OPTIONS = [
-    "Ransomware or malware activation",
-    "Unauthorized access or account compromise",
-    "Vulnerability exploitation",
-    "Service or system outage",
-    "Data exposure or potential breach",
-    "Anomalous telemetry or sensor readings",
-    "Malicious or unsafe AI system behavior",
-    "Vendor platform failure or misconfiguration",
-    "Suspicious network traffic or lateral movement",
-    "Other (not listed here)",
-]
-
-DECISION_TYPE_OPTIONS = [
-    "Shut down or isolate a system",
-    "Maintain, reduce, or reroute operations",
-    "Grant, restrict, or revoke access",
-    "Disconnect or disable automation",
-    "Engage or escalate to vendor support",
-    "Pay or refuse an extortion or ransom demand",
-    "Switch to manual control or fallback mode",
-    "Notify or withhold information from leadership/public",
-    "Apply a patch, reconfiguration, or policy change",
-    "Other (not listed here)",
-]
-
-ETHICAL_CONDITION_TAG_OPTIONS = [
-    "Potential harm to residents or service users",
-    "Potential harm to critical services (e.g., police, fire, water)",
-    "Disproportionate impact on vulnerable populations",
-    "Risks to employees or internal staff",
-    "Privacy or confidentiality concerns",
-    "Risks to public trust or legitimacy",
-    "Legal or regulatory exposure",
-    "Other ethical concerns",
-]
 
 
 def _build_pdf(title: str, lines: list[str]) -> BytesIO:
@@ -721,12 +628,6 @@ def render_open_ended():
             "Document constraints that shape or limit feasible actions or justification.",
         )
 
-        st.multiselect(
-            "Constraints (select any that apply)",
-            options=GOV_CONSTRAINTS,
-            key="oe_constraints",
-        )
-
         st.text_area(
             "Other constraints (optional)",
             key="oe_constraints_other",
@@ -748,147 +649,18 @@ def render_open_ended():
             placeholder="Example: Disconnect additional systems while confirming scope; preserve critical service workflows via manual workarounds.",
         )
 
-        st.markdown("---")
 
-        if st.session_state.get("oe_generate"):
-            st.session_state["oe_generate"] = False  # reset trigger
+        pdf = _build_pdf(
+            "Decision Rationale (Open-Ended Mode)",
+            [ln for ln in lines if ln is not None and ln != ""],
+        )
 
-            ts = datetime.now().isoformat(timespec="minutes")
-            st.success("Decision rationale generated below.")
-            st.markdown("#### Decision Rationale (Open-Ended Mode)")
-            st.write(f"**Timestamp:** {ts}")
-
-            func_labels = {fid: meta["label"] for fid, meta in CSF_FUNCTION_OPTIONS.items()}
-            cat_labels = {cid: lbl for _, cats in CATS_BY_FUNC.items() for cid, lbl in cats}
-            sub_labels = {sid: lbl for _, subs in SUBS_BY_CAT.items() for sid, lbl in subs}
-
-            trigger_example = st.session_state.get("oe_gate_trigger_example", "")
-            trigger_type = st.session_state.get("oe_gate_trigger_type", "")
-            triggering_condition = st.session_state.get("oe_gate_triggering_condition", "")
-
-            decision_type = st.session_state.get("oe_decision_type", "")
-            decision_context = st.session_state.get("oe_decision_context", "")
-
-            selected_func_id = st.session_state.get("oe_csf_function", "")
-            selected_cat_id = st.session_state.get("oe_csf_category", "")
-            selected_sub_ids = st.session_state.get("oe_csf_subcategories", [])
-            csf_rationale = st.session_state.get("oe_csf_rationale", "")
-
-            ethical_tags = st.session_state.get("oe_ethical_condition_tags", [])
-            pfce_analysis = st.session_state.get("oe_pfce_analysis", "")
-            ethical_tension = st.session_state.get("oe_ethical_tension", "")
-
-            selected_pfce = st.session_state.get("oe_pfce_principles", [])
-            pfce_rationale = st.session_state.get("oe_pfce_rationale", "")
-
-            selected_constraints = st.session_state.get("oe_constraints", [])
-            other_constraints = st.session_state.get("oe_constraints_other", "")
-
-            decision = st.session_state.get("oe_decision", "")
-
-            st.markdown("**Triggering condition and key events**")
-            if trigger_example:
-                st.write(f"Example: {trigger_example}")
-            st.write(f"Trigger type: {trigger_type or '—'}")
-            st.write(triggering_condition or "—")
-
-            st.markdown("**Decision context**")
-            if decision_type:
-                st.write(f"Decision context type: {decision_type}")
-            st.write(decision_context or "—")
-
-            st.markdown("**NIST CSF mapping**")
-            st.write(f"- Function: {func_labels.get(selected_func_id, selected_func_id or '—')}")
-            st.write(f"- Category: {cat_labels.get(selected_cat_id, selected_cat_id or '—')}")
-            if selected_sub_ids:
-                st.write("- Subcategories / outcomes:")
-                for sid in selected_sub_ids:
-                    st.write(f"  - {sid} — {sub_labels.get(sid, '') or '—'}")
-            else:
-                st.write("- Subcategories / outcomes: —")
-            if csf_rationale:
-                st.write(f"- Rationale: {csf_rationale}")
-
-            st.markdown("**PFCE analysis and ethical tension**")
-            if ethical_tags:
-                st.write("Tags: " + ", ".join(ethical_tags))
-            st.write(pfce_analysis or "—")
-            st.write(f"**Ethical tension:** {ethical_tension or '—'}")
-
-            st.markdown("**PFCE principles (if selected)**")
-            if selected_pfce:
-                st.write(", ".join(selected_pfce))
-                st.write("**Overall ethical focus:** " + summarize_pfce(selected_pfce))
-            else:
-                st.write("—")
-            if pfce_rationale:
-                st.markdown("**PFCE rationale**")
-                st.write(pfce_rationale)
-
-            st.markdown("**Institutional and governance constraints**")
-            if selected_constraints:
-                for c in selected_constraints:
-                    st.write(f"- {c}")
-            else:
-                st.write("—")
-            if other_constraints:
-                st.write(f"Other: {other_constraints}")
-
-            st.markdown("**Decision**")
-            st.write(decision or "—")
-
-            lines = [
-                f"Timestamp: {ts}",
-                "",
-                "Triggering condition and key events",
-                f"Example: {trigger_example or '—'}",
-                f"Trigger type: {trigger_type or '—'}",
-                triggering_condition or "—",
-                "",
-                "Decision context",
-                f"Decision context type: {decision_type or '—'}",
-                decision_context or "—",
-                "",
-                "NIST CSF mapping",
-                f"Function: {func_labels.get(selected_func_id, selected_func_id or '—')}",
-                f"Category: {cat_labels.get(selected_cat_id, selected_cat_id or '—')}",
-                "Subcategories / outcomes:",
-                *(
-                    ["  - " + sid + " — " + (sub_labels.get(sid, "") or "—") for sid in selected_sub_ids]
-                    if selected_sub_ids
-                    else ["  - —"]
-                ),
-                ("Rationale: " + csf_rationale) if csf_rationale else "",
-                "",
-                "PFCE analysis and ethical tension",
-                ("Tags: " + ", ".join(ethical_tags)) if ethical_tags else "Tags: —",
-                pfce_analysis or "—",
-                "Ethical tension: " + (ethical_tension or "—"),
-                "",
-                "PFCE principles",
-                (", ".join(selected_pfce) if selected_pfce else "—"),
-                ("Overall ethical focus: " + summarize_pfce(selected_pfce)) if selected_pfce else "",
-                ("PFCE rationale: " + pfce_rationale) if pfce_rationale else "",
-                "",
-                "Institutional and governance constraints",
-                *(selected_constraints if selected_constraints else ["—"]),
-                ("Other: " + other_constraints) if other_constraints else "",
-                "",
-                "Decision",
-                decision or "—",
-            ]
-
-            pdf = _build_pdf(
-                "Decision Rationale (Open-Ended Mode)",
-                [ln for ln in lines if ln is not None and ln != ""],
-            )
-
-            st.download_button(
-                "Download decision rationale (PDF)",
-                data=pdf,
-                file_name="decision_rationale_open_ended.pdf",
-                mime="application/pdf",
-            )
+        st.download_button(
+            "Download decision rationale (PDF)",
+            data=pdf,
+            file_name="decision_rationale_open_ended.pdf",
+            mime="application/pdf",
+        )
 
     # NAV CONTROLS
     with st.container():
