@@ -230,7 +230,6 @@ def render_open_ended():
             margin-top: -12px;
             font-size: 0.85rem;
             color: rgba(229,231,235,0.75);
-            text-align: center;
         ">
             Step {step} of {total_steps}
         </div>
