@@ -50,14 +50,14 @@ def render_open_ended():
     step = st.session_state.get("oe_step", 1)
 
     STEP_TITLES = {
-        1: "Decision Context",
+        1: "Scenario Description",
         2: "Technical Context (NIST CSF)",
         3: "Ethical Considerations",
         4: "Institutional and Governance Constraints",
         5: "Decision and Rationale",
     }
 
-    step_title = STEP_TITLES.get(step, "Decision Context")
+    step_title = STEP_TITLES.get(step, "Scenario Description")
 
     st.markdown(
         f"""
@@ -151,7 +151,7 @@ def _load_core_data():
     return csf, crosswalk, pfce, constraints
 
 OE_STEP_TITLES = {
-    1: "Decision Context",
+    1: "Scenario Description",
     2: "NIST CSF Mapping",
     3: "PFCE Analysis and Ethical Tension",
     4: "Institutional and Governance Constraints",
@@ -459,11 +459,11 @@ def render_open_ended():
         )
 
         # Text box with ONLY guidance as placeholder
-        decision_context = st.text_area(
+        scenario_description = st.text_area(
             "Scenario Description",
             key="oe_scenario_description",
             height=120,
-            placeholder="Following a suspected ransomware incident, some municipal systems have been restored while others remain offline. A decision is required on whether to further isolate network segments to limit potential spread, which would disrupt services that are currently functioning. The decision must be made quickly with limited information about the scope of compromise.",
+            placeholder="(Example: Following a suspected ransomware incident, some municipal systems have been restored while others remain offline. A decision is required on whether to further isolate network segments to limit potential spread, which would disrupt services that are currently functioning. The decision must be made quickly with limited information about the scope of compromise.)",
             label_visibility="collapsed",
         )
 
