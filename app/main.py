@@ -4,12 +4,12 @@ import textwrap
 import html
 
 # -*- coding: utf-8 -*-
-
+ 
 # Ensure project root is on sys.path
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
-
+ 
 import streamlit as st
 
 from logic.loaders import load_case
@@ -17,7 +17,7 @@ from app import case_based, open_ended
 
 # ---------- Page config ----------
 st.set_page_config(
-    page_title="Municipal Cybersecurity Reasoning Prototype",
+    page_title="Municipal Cybersecurity Reasoning Tool",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -89,6 +89,33 @@ section[data-testid="stSidebar"] .sb-details{
   margin: 0.35rem 0 0.75rem 0 !important;
   overflow: visible !important; /* keeps hover glow + under-glow from clipping */
 }
+/* === Reference List (inside Tool Foundations) === */
+section[data-testid="stSidebar"] .sb-ref-list {
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+}
+
+section[data-testid="stSidebar"] .sb-ref-item {
+  margin-bottom: 0.75rem;
+}
+
+section[data-testid="stSidebar"] .sb-ref-meta {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+section[data-testid="stSidebar"] .sb-ref-link {
+  font-weight: 800;
+  color: white;
+  text-decoration: none;
+}
+
+/* Indent section body text (matches References indentation) */
+section[data-testid="stSidebar"] .sb-section-body {
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+}
+
 section[data-testid="stSidebar"] .sb-details > summary{
   /* layout */
   list-style: none !important;
@@ -162,7 +189,6 @@ section[data-testid="stSidebar"] .sb-details-body .sb-section{
   margin: 0 !important;             /* remove space under header */
   margin-top: 0.75rem !important;   /* add space above header */
 }
-
 /* Match the visual inset seen in mode-tile details bodies */
 section[data-testid="stSidebar"] .sb-details-body{
   padding: 12px 12px !important; 
@@ -930,7 +956,7 @@ def _open_sidebar_once():
 
 
 def render_disclaimer_footer():
-    txt = "This prototype is designed for research and demonstration purposes"
+    txt = "This tool is designed for research and demonstration purposes"
 
     st.markdown(
         f"""
@@ -973,7 +999,7 @@ def _render_landing_page():
 
                     <div class="tile-title">Case-Based Mode</div>
 
-                    <div class="tile-hook">Explore the prototype through reconstructed municipal cybersecurity cases.</div>
+                    <div class="tile-hook">Explore the tool through reconstructed municipal cybersecurity cases.</div>
 
 
                     <!-- Collapsible details (inside tile) -->
@@ -984,14 +1010,14 @@ def _render_landing_page():
 
                       <div class="details-body">
                         <div class="mode-detail-text">
-                          Uses reconstructed municipal cybersecurity cases to demonstrate the prototype’s stepwise reasoning process:
+                          Uses reconstructed municipal cybersecurity cases to demonstrate the tool’s stepwise reasoning process:
                         </div>
 
                         <ul class="tight-list">
                           <li>Two real-world municipal incidents and one purpose-built hypothetical scenario</li>
                           <li>Examines both retrospective incidents and forward-looking decision contexts</li>
                           <li>Shows how technical and ethical reasoning unfold across a full decision process</li>
-                          <li>Establishes a shared reference point for how the prototype is applied in practice</li>
+                          <li>Establishes a shared reference point for how the tool is applied in practice</li>
                           <li>Informed the structure and logic of the Open-Ended Mode</li>
                         </ul>
                       </div>
@@ -1014,7 +1040,7 @@ def _render_landing_page():
 
                     <div class="tile-title">Open-Ended Mode</div>
 
-                    <div class="tile-hook">Apply the prototype to a cybersecurity decision context you define.</div>
+                    <div class="tile-hook">Apply the tool to a cybersecurity decision context you define.</div>
 
                     <!-- Collapsible details (inside tile) -->
                     <details onclick="event.stopPropagation();">
@@ -1024,7 +1050,7 @@ def _render_landing_page():
 
                       <div class="details-body">
                         <div class="mode-detail-text">
-                          Applies the prototype’s stepwise reasoning process to a user-defined cybersecurity decision context:
+                          Applies the tool’s stepwise reasoning process to a user-defined cybersecurity decision context:
                         </div>
 
                         <ul class="tight-list">
@@ -1153,12 +1179,12 @@ def render_app_header(show_banner: bool = True):
                 st.session_state.pop("oe_step", None)
                 st.rerun()
 
-    # --- Prototype banner (select pages only) ---
+    # --- Tool banner (select pages only) ---
     if show_banner:
         st.markdown(
             """
             <div style='text-align:center;'>
-              <h1>🛡️ Municipal Cybersecurity Reasoning Prototype</h1>
+              <h1>🛡️ Municipal Cybersecurity Reasoning Tool</h1>
               <div style="font-size:2.0rem; font-weight:800; letter-spacing:0.01em; color:#4C8BF5; margin-top:0.25rem;">
                 What's Secure Isn't Always What's Right.
               </div>
@@ -1271,7 +1297,7 @@ def main():
         sidebar_divider()
 
         st.markdown(
-            "<h3 style='font-weight:700;'>Prototype Overview</h3>",
+            "<h3 style='font-weight:700;'>Tool Overview</h3>",
             unsafe_allow_html=True,
         )
 
@@ -1279,46 +1305,32 @@ def main():
             html_block(
                 """
                 <details class="sb-details">
-                  <summary>ℹ️ About This Prototype</summary>
+                  <summary>ℹ️ About This Tool</summary>
                   <div class="sb-details-body">
 
                     <span class="sb-section">What It Is</span>
 
-                    <div class="sb-p">
-                      A decision-support prototype designed to help municipal cybersecurity practitioners surface and reason through ethical tensions that arise in cybersecurity decision-making.
-                    </div>
+                    <div class="sb-section-body">
+                      <div class="sb-p">
+                        This tool provides a structured reasoning sequence for municipal cybersecurity decisions. It prompts you to identify stakeholders, surface tensions between ethical and technical considerations, reason through trade-offs, and document your decision. The structure ensures that competing and conflicting obligations are made explicit so you can deliberate through them rather than leave them unexamined.
+                      </div>
 
-                    <div class="sb-p">
-                      It is not designed to prescribe actions.
+                      <div class="sb-p">
+                        The reasoning structure draws from two established frameworks: the NIST Cybersecurity Framework 2.0 for technical considerations and the Principlist Framework for Cybersecurity Ethics (PFCE) for ethical considerations.                   
+                      </div>
                     </div>
 
                     <span class="sb-section">How It Works</span>
+                      
+                    <div class="sb-section-body">
+                      <div class="sb-p">
+                        This tool guides you through a step-by-step sequence at the point of decision, whether during a crisis, routine planning, or recovery. Each step prompts a specific dimension of reasoning. By the end, you have a documented record of what you decided, who it affects, what tensions you identified, and why you made the trade-offs you did. This supports transparency, accountability, and organizational learning.
+                      </div>
 
-                    <div class="sb-p">
-                      The prototype consists of two modes:
+                      <div class="sb-p">
+                        This tool does not tell you what to decide. It structures how you reason through the decision.                  
+                      </div>
                     </div>
-
-                    <ul>
-                      <li>
-                        <strong>Case-Based Mode</strong><br>
-                        Uses reconstructed municipal cybersecurity cases to construct and apply a stepwise reasoning process, showing how technical and ethical reasoning unfold across a full decision process and how that logic informed the design of the Open-Ended Mode.
-                      </li>
-                      <li>
-                        <strong>Open-Ended Mode</strong><br>
-                        Applies the same underlying reasoning logic to a user-defined cybersecurity decision context, reflecting the intended operational use of the prototype.
-                      </li>
-                    </ul>
-
-                    <div class="sb-p">
-                      Across both modes, the prototype is designed to surface and document:
-                    </div>
-
-                    <ul>
-                      <li>The decision context.</li>
-                      <li>Where the decision sits within the NIST Cybersecurity Framework (CSF), clarifying the technical and operational nature of the decision.</li>
-                      <li>What ethical tension(s) arise within that decision context, surfaced through the Principlist Framework for Cybersecurity Ethics (PFCE).</li>
-                      <li>Institutional and governance constraints shaping the decision environment.</li>
-                    </ul>
 
                   </div>
                 </details>
@@ -1330,7 +1342,7 @@ def main():
         sidebar_divider()
 
         st.markdown(
-            "<h3 style='font-weight:700;'>Appendix</h3>",
+            "<h3 style='font-weight:700;'>Tool Foundations</h3>",
             unsafe_allow_html=True,
         )
 
@@ -1338,33 +1350,45 @@ def main():
             html_block(
                 """
                 <details class="sb-details">
-                  <summary>📚 Framework References</summary>
+                  <summary>📚 References</summary>
                   <div class="sb-details-body">
 
-                    <a href="https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
-                      target="_blank"
-                      title="Open the NIST Cybersecurity Framework (CSF) 2.0 (PDF)"
-                      style="
-                        font-weight:800;
-                        color: white;
-                        text-decoration: none;
-                      ">
-                    NIST Cybersecurity Framework (CSF) 2.0
-                    </a><br>
-                    National Institute of Standards and Technology (2024)
+                    <div class="sb-p">
+                      The ethical and technical reasoning structure is informed by two established frameworks:                   
+                    </div>
 
-                    <a href="https://doi.org/10.1016/j.cose.2021.102382"
-                      target="_blank"
-                      title="Open the Principlist Framework for Cybersecurity Ethics journal article"
-                      style="
-                        font-weight:800;
-                        color: white;
-                        text-decoration: none;
-                      ">
-                    Principlist Framework for Cybersecurity Ethics (PFCE)
-                    </a><br>
-                    Formosa, Paul; Michael Wilson; Deborah Richards (2021)<br>
+                    <div class="sb-ref-list">
 
+                      <div class="sb-ref-item">
+                        <a href="https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.pdf"
+                          target="_blank"
+                          title="Learn more about the NIST Cybersecurity Framework (CSF) 2.0"
+                          style="
+                            font-weight:800;
+                            color: white;
+                            text-decoration: none;
+                          ">
+                          NIST Cybersecurity Framework (CSF) 2.0
+                        </a><br>
+                        <span class="sb-ref-meta">National Institute of Standards and Technology (2024)</span>
+                      </div>
+
+                      <div class="sb-ref-item">
+                        <a href="https://doi.org/10.1016/j.cose.2021.102382"
+                          target="_blank"
+                          title="Learn more about the Principlist Framework for Cybersecurity Ethics"
+                          style="
+                            font-weight:800;
+                            color: white;
+                            text-decoration: none;
+                          ">
+                          Principlist Framework for Cybersecurity Ethics (PFCE)
+                        </a><br>
+                        <span class="sb-ref-meta">Formosa, Paul; Michael Wilson; Deborah Richards (2021)</span>
+                      </div>
+
+                    </div>
+                
                   </div>
                 </details>
                 """
