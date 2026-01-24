@@ -403,6 +403,7 @@ def render_open_ended():
     # STEP 4: STAKEHOLDER IDENTIFICATION
     # ==========================================================
     elif step == 4:
+        # Instruction header (same pattern as Step 3)
         st.markdown(
             """
             <div style="
@@ -426,48 +427,56 @@ def render_open_ended():
                 color: rgba(229,231,235,0.65);
                 line-height: 1.4;
             ">
-            Select all that apply. Add any missing stakeholders under “Other.”
+            Select all that apply. These may include operational, governance, public, or external stakeholders.
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        selected = st.multiselect(
-            label="Stakeholders",
-            options=STAKEHOLDER_OPTIONS,
-            default=st.session_state.get("oe_stakeholders_selected", []),
-            key="oe_stakeholders_selected",
-            placeholder="Select one or more stakeholders…",
-            label_visibility="collapsed",
-        )
+        selected_stakeholders = []
 
-        # “Other” toggle + free text
+        # Scannable checkbox list (mirrors PFCE / Step 3 style)
+        with st.container(height=300):
+            for stakeholder in STAKEHOLDER_OPTIONS:
+                if st.checkbox(
+                    stakeholder,
+                    key=f"oe_stakeholder_{stakeholder}",
+                ):
+                    selected_stakeholders.append(stakeholder)
+
+        # Optional "Other" stakeholders
         add_other = st.checkbox(
             "Other stakeholder(s) not listed",
-            key="oe_stakeholders_other_toggle",
+            key="oe_stakeholder_other_toggle",
         )
 
         other_text = ""
         if add_other:
             other_text = st.text_area(
                 "Other stakeholders",
-                key="oe_stakeholders_other_text",
+                key="oe_stakeholder_other_text",
                 height=90,
                 placeholder="Example: Regional 911 dispatch, county emergency management, school district IT, union representatives…",
                 label_visibility="collapsed",
             ).strip()
 
-        # Normalize and store a combined list (for export + downstream logic)
-        other_list = [s.strip() for s in other_text.split(",") if s.strip()] if other_text else []
-        combined = list(dict.fromkeys((selected or []) + other_list))  # de-dup, preserve order
+        other_list = [s.strip() for s in other_text.split(",") if s.strip()]
+        combined_stakeholders = list(dict.fromkeys(selected_stakeholders + other_list))
 
-        st.session_state["oe_stakeholders_combined"] = combined
+        # Persist clean, combined output
+        st.session_state["oe_stakeholders"] = combined_stakeholders
 
-        # Optional confirmation
-        if combined:
-            st.info("Stakeholders recorded: **" + ", ".join(combined) + "**")
+        # Feedback + gating
+        if combined_stakeholders:
+            st.info(
+                "Stakeholders identified: **"
+                + ", ".join(combined_stakeholders)
+                + "**"
+            )
         else:
-            st.warning("Select at least one stakeholder (or add one under “Other”) to continue.")
+            st.warning(
+                "Identify at least one stakeholder (or add one under “Other”) to continue."
+            )
             st.stop()
 
 
