@@ -45,10 +45,6 @@ def render_divider():
         unsafe_allow_html=True,
     )
 
-def render_open_ended():
-    step = st.session_state.get("oe_step", 1)
-    step_title = OE_STEP_TITLES.get(step, OE_STEP_TITLES[1])
-
 
     st.markdown(
         f"""
@@ -140,7 +136,7 @@ def _load_core_data():
 
 OE_STEP_TITLES = {
     1: "Scenario Description",
-    2; "Decision Point",
+    2: "Decision Point",
     3: "Decision Context Classification",
     4: "NIST CSF Mapping",
     5: "PFCE Analysis and Ethical Tension",
@@ -444,9 +440,9 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 2: Decision Context Classification
+    # STEP 2: Decision Point
     # ==========================================================
-    if step == 2:
+    elif step == 2:
         # Instruction text above the input
         st.markdown(
             """
@@ -476,7 +472,7 @@ def render_open_ended():
     # ==========================================================
     # STEP 3: Decision Context Classification
     # ==========================================================
-    if step == 3:
+    elif step == 3:
         # Instruction text above the input
         st.markdown(
             """
@@ -488,11 +484,6 @@ def render_open_ended():
                 line-height: 1.45;
             ">
             What type of decision context best describes the s?:
-            <ul class="tight-list" style="margin-bottom: 0.75rem;">
-                <li>What happened or what is being proposed</li>
-                <li>When the decision must be made</li>
-                <li>What constraints exist (time, resources, information)</li>
-            </ul>
             </div>
             """,
             unsafe_allow_html=True
@@ -508,9 +499,9 @@ def render_open_ended():
         )
 
     # ==========================================================
-    # STEP 3: NIST CSF
+    # STEP 4: NIST CSF
     # ==========================================================
-    elif step == 3:
+    elif step == 4:
         # ---------- CSF Function ----------
         with st.container():
             st.markdown('<div class="csf-func-anchor"></div>', unsafe_allow_html=True)
@@ -640,9 +631,9 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 4: PFCE + TENSION
+    # STEP 5: PFCE + TENSION
     # ==========================================================
-    elif step == 4:
+    elif step == 5:
 
         # ---------- PFCE principle triage (multi-select) ----------
         with st.container():
@@ -740,9 +731,9 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 5: CONSTRAINTS
+    # STEP 6: CONSTRAINTS
     # ==========================================================
-    elif step == 5:
+    elif step == 6:
         _render_step_tile_html(
             "Document constraints that shape or limit feasible actions or justification.",
         )
@@ -760,9 +751,9 @@ def render_open_ended():
         )
 
     # ==========================================================
-    # STEP 6: DECISION + OUTPUT 
+    # STEP 7: DECISION + OUTPUT 
     # ==========================================================
-    elif step == 6:
+    elif step == 7:
         _render_step_tile_html(
             "Record the decision in operational terms, then generate a structured rationale for demonstration purposes.",
         )
