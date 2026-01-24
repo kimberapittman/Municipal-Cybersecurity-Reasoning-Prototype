@@ -422,21 +422,6 @@ def render_open_ended():
     # STEP 1: Scenario Description
     # ==========================================================
     if step == 1:
-        # Tighten spacing ONLY for this Step 1 text area
-        st.markdown(
-            """
-            <style>
-            /* Scope to Open-Ended Step 1 only */
-            div[data-testid="stVerticalBlock"]:has(#oe-step1-anchor)
-            div[data-testid="stTextArea"]{
-            margin-top: 0 !important;
-            }
-            </style>
-            <div id="oe-step1-anchor"></div>
-            """,
-            unsafe_allow_html=True,
-        )
-
         # Instruction text above the input
         st.markdown(
             """
@@ -448,7 +433,7 @@ def render_open_ended():
                 line-height: 1.45;
             ">
             Describe the situation requiring a decision. Include:
-            <ul style="margin: 0.4rem 0 0 1.1rem; padding: 0;">
+            <ul class="tight-list" style="margin-bottom: 3rem;">
                 <li>What happened or what is being proposed</li>
                 <li>When the decision must be made</li>
                 <li>What constraints exist (time, resources, information)</li>
