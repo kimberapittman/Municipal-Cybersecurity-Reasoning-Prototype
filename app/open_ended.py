@@ -72,20 +72,35 @@ assert set(OE_STEP_TITLES.keys()) == set(range(1, OE_TOTAL_STEPS + 1)), "Step nu
 
 
 DECISION_CLASSIFICATION_OPTIONS = {
-    "management_change": {
-        "prompt": "Considering changes to how the organization manages cybersecurity (e.g., new technology, policy, governance approach, or risk posture).",
-        "csf_suggested": ["GV", "ID", "PR"],
+    "governance": {
+        "prompt": (
+            "Considering changes to how the organization manages cybersecurity "
+            "(e.g., governance, policy, risk posture, system design, or adoption of new technologies)."
+        ),
+        "csf_suggested": ["GV", "ID"],
+    },
+    "preventive": {
+        "prompt": (
+            "Implementing or adjusting safeguards to reduce cybersecurity risk "
+            "(e.g., access controls, configurations, protections, or preventive measures)."
+        ),
+        "csf_suggested": ["PR"],
     },
     "incident_response": {
-        "prompt": "Responding to an active or suspected cybersecurity incident (e.g., ransomware, intrusion, anomalous behavior, or containment actions).",
+        "prompt": (
+            "Responding to an active or suspected cybersecurity incident "
+            "(e.g., detection, containment, investigation, or response actions)."
+        ),
         "csf_suggested": ["DE", "RS"],
     },
-    "recovery_restoration": {
-        "prompt": "Restoring systems or services following an incident (e.g., recovery sequencing, service restoration, post-incident actions).",
+    "recovery": {
+        "prompt": (
+            "Restoring systems or services following a cybersecurity incident "
+            "(e.g., recovery sequencing, service restoration, or post-incident actions)."
+        ),
         "csf_suggested": ["RC"],
     },
 }
-
 
 
 # Practitioner-friendly NIST CSF 2.0 function prompts for Open-Ended Mode
@@ -359,12 +374,12 @@ def render_open_ended():
             options=list(DECISION_CLASSIFICATION_OPTIONS.keys()),
             index=None,
             format_func=lambda k: DECISION_CLASSIFICATION_OPTIONS[k]["prompt"],
-            key="oe_decision_context_type",
+            key="oe_decision_classification_type",
             label_visibility="collapsed",
         )
 
         if selected:
-            st.session_state["oe_decision_context_type"] = selected
+            st.session_state["oe_decision_classification_type"] = selected
             st.session_state["oe_suggested_csf_functions"] = DECISION_CLASSIFICATION_OPTIONS[selected]["csf_suggested"]
 
             st.info("Decision classification recorded.")
