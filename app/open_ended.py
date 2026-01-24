@@ -58,6 +58,43 @@ def csf_section_close():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+OE_STEP_TITLES = {
+    1: "Scenario Description",
+    2: "Decision Point",
+    3: "Decision Context Classification",
+    4: "NIST CSF Mapping",
+    5: "PFCE Analysis and Ethical Tension",
+    6: "Institutional and Governance Constraints",
+    7: "Decision (and documented rationale)",
+}
+OE_TOTAL_STEPS = max(OE_STEP_TITLES.keys())
+assert set(OE_STEP_TITLES.keys()) == set(range(1, OE_TOTAL_STEPS + 1)), "Step numbers must be contiguous."
+
+
+DECISION_CONTEXT_TYPE_OPTIONS = {
+    "strategic_governance": {
+        "label": "Strategic / Governance Decision",
+        "prompt": "Policy, risk appetite, governance direction, prioritization, or enterprise planning (often GV/ID).",
+        "csf_suggested": ["GV", "ID"],
+    },
+    "operational_preventive": {
+        "label": "Operational / Preventive Decision",
+        "prompt": "Selecting or implementing safeguards/controls to reduce risk before or outside an active incident (often PR).",
+        "csf_suggested": ["PR"],
+    },
+    "incident_response": {
+        "label": "Incident Response Decision",
+        "prompt": "Investigating, detecting, containing, communicating, or taking action during a suspected/active incident (often DE/RS).",
+        "csf_suggested": ["DE", "RS"],
+    },
+    "recovery_restoration": {
+        "label": "Recovery / Restoration Decision",
+        "prompt": "Restoring services/data, sequencing recovery priorities, and returning to operations after an incident (often RC).",
+        "csf_suggested": ["RC"],
+    },
+}
+
+
 # Practitioner-friendly NIST CSF 2.0 function prompts for Open-Ended Mode
 CSF_FUNCTION_OPTIONS = {
     "GV": {
@@ -103,19 +140,6 @@ CSF_FUNCTION_OPTIONS = {
         ),
     },
 }
-
-
-OE_STEP_TITLES = {
-    1: "Scenario Description",
-    2: "Decision Point",
-    3: "Decision Context Classification",
-    4: "NIST CSF Mapping",
-    5: "PFCE Analysis and Ethical Tension",
-    6: "Institutional and Governance Constraints",
-    7: "Decision (and documented rationale)",
-}
-OE_TOTAL_STEPS = max(OE_STEP_TITLES.keys())
-assert set(OE_STEP_TITLES.keys()) == set(range(1, OE_TOTAL_STEPS + 1)), "Step numbers must be contiguous."
 
 
 PFCE_DEFINITIONS = {
@@ -322,7 +346,6 @@ def render_open_ended():
     # STEP 3: Decision Context Classification
     # ==========================================================
     elif step == 3:
-        # Instruction text above the input
         st.markdown(
             """
             <div style="
@@ -332,20 +355,35 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            What type of decision context best describes the s?:
+            What type of decision is this?
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # Text box with ONLY guidance as placeholder
-        decision_context = st.text_area(
-            "Decision Context",
-            key="oe_decision_context",
-            height=120,
-            placeholder="(Example: Following a suspected ransomware incident, some municipal systems have been restored while others remain offline. A decision is required on whether to further isolate network segments to limit potential spread, which would disrupt services that are currently functioning. The decision must be made quickly with limited information about the scope of compromise.)",
+        options = list(DECISION_CONTEXT_TYPE_OPTIONS.keys())
+
+        selected = st.radio(
+            label="Decision context type",
+            options=options,
+            key="oe_decision_context_type",
+            index=None,
+            format_func=lambda k: (
+                f"{DECISION_CONTEXT_TYPE_OPTIONS[k]['label']} — "
+                f"{DECISION_CONTEXT_TYPE_OPTIONS[k]['prompt']}"
+            ),
             label_visibility="collapsed",
         )
+
+        if selected:
+            st.session_state["oe_decision_context_type_label"] = DECISION_CONTEXT_TYPE_OPTIONS[selected]["label"]
+            st.session_state["oe_suggested_csf_functions"] = DECISION_CONTEXT_TYPE_OPTIONS[selected]["csf_suggested"]
+
+            st.info(
+                "Selected decision context type: "
+                f"**{st.session_state['oe_decision_context_type_label']}**"
+            )
+
 
     # ==========================================================
     # STEP 4: NIST CSF
