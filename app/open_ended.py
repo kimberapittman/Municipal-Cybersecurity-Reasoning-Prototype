@@ -419,7 +419,7 @@ def render_open_ended():
         )
 
     # ==========================================================
-    # STEP 1: DECISION CONTEXT
+    # STEP 1: Scenario Description
     # ==========================================================
     if step == 1:
         # Tighten spacing ONLY for this Step 1 text area
@@ -447,7 +447,12 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            Describe the cybersecurity decision you are facing or examining before a course of action is chosen.
+            Describe the situation requiring a decision. Include:
+            <ul style="margin: 0.4rem 0 0 1.1rem; padding: 0;">
+                <li>What happened or what is being proposed</li>
+                <li>When the decision must be made</li>
+                <li>What constraints exist (time, resources, information)</li>
+            </ul>
             </div>
             """,
             unsafe_allow_html=True
@@ -455,36 +460,11 @@ def render_open_ended():
 
         # Text box with ONLY guidance as placeholder
         decision_context = st.text_area(
-            "Decision context",
-            key="oe_decision_context",
+            "Scenario Description",
+            key="oe_scenario_description",
             height=120,
-            placeholder="1–2 sentences describing the decision context (not the outcome or justification).",
+            placeholder="Following a suspected ransomware incident, some municipal systems have been restored while others remain offline. A decision is required on whether to further isolate network segments to limit potential spread, which would disrupt services that are currently functioning. The decision must be made quickly with limited information about the scope of compromise.",
             label_visibility="collapsed",
-        )
-
-        # Optional examples (expander)
-        st.markdown(
-            _html_block(
-                """
-        <details class="oe-example-expander">
-        <summary title="Examples are drawn from reconstructed municipal cybersecurity incidents and a purpose-built hypothetical scenario used to inform the design of this prototype.">
-            See example decision contexts (optional)
-        </summary>
-
-        <div class="oe-example-body">
-            <p><strong>Baltimore (Ransomware):</strong><br>
-            Maintain network connectivity while assessing the scope of a ransomware attack or proactively disconnect additional systems.</p>
-
-            <p><strong>San Diego (Surveillance Repurposing):</strong><br>
-            Maintain or modify current law-enforcement access to smart streetlight video surveillance.</p>
-
-            <p><strong>Riverton (AI-Enabled Control System):</strong><br>
-            Maintain AI-imposed restrictions or restore full operator control.</p>
-        </div>
-        </details>
-                """
-            ),
-            unsafe_allow_html=True
         )
 
 
