@@ -71,28 +71,21 @@ OE_TOTAL_STEPS = max(OE_STEP_TITLES.keys())
 assert set(OE_STEP_TITLES.keys()) == set(range(1, OE_TOTAL_STEPS + 1)), "Step numbers must be contiguous."
 
 
-DECISION_CONTEXT_TYPE_OPTIONS = {
-    "strategic_governance": {
-        "label": "Strategic / Governance Decision",
-        "prompt": "Policy, risk appetite, governance direction, prioritization, or enterprise planning (often GV/ID).",
-        "csf_suggested": ["GV", "ID"],
-    },
-    "operational_preventive": {
-        "label": "Operational / Preventive Decision",
-        "prompt": "Selecting or implementing safeguards/controls to reduce risk before or outside an active incident (often PR).",
-        "csf_suggested": ["PR"],
+DECISION_CLASSIFICATION_OPTIONS = {
+    "management_change": {
+        "prompt": "Considering changes to how the organization manages cybersecurity (e.g., new technology, policy, governance approach, or risk posture).",
+        "csf_suggested": ["GV", "ID", "PR"],
     },
     "incident_response": {
-        "label": "Incident Response Decision",
-        "prompt": "Investigating, detecting, containing, communicating, or taking action during a suspected/active incident (often DE/RS).",
+        "prompt": "Responding to an active or suspected cybersecurity incident (e.g., ransomware, intrusion, anomalous behavior, or containment actions).",
         "csf_suggested": ["DE", "RS"],
     },
     "recovery_restoration": {
-        "label": "Recovery / Restoration Decision",
-        "prompt": "Restoring services/data, sequencing recovery priorities, and returning to operations after an incident (often RC).",
+        "prompt": "Restoring systems or services following an incident (e.g., recovery sequencing, service restoration, post-incident actions).",
         "csf_suggested": ["RC"],
     },
 }
+
 
 
 # Practitioner-friendly NIST CSF 2.0 function prompts for Open-Ended Mode
@@ -343,7 +336,7 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 3: Decision Context Classification
+    # STEP 3: Decision Classification
     # ==========================================================
     elif step == 3:
         st.markdown(
@@ -355,34 +348,26 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            What type of decision is this?
+            Select the classification that most closely aligns with the specific decision you are examining.
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        options = list(DECISION_CONTEXT_TYPE_OPTIONS.keys())
-
         selected = st.radio(
-            label="Decision context type",
-            options=options,
-            key="oe_decision_context_type",
+            label="Decision classification",
+            options=list(DECISION_CLASSIFICATION_OPTIONS.keys()),
             index=None,
-            format_func=lambda k: (
-                f"{DECISION_CONTEXT_TYPE_OPTIONS[k]['label']} — "
-                f"{DECISION_CONTEXT_TYPE_OPTIONS[k]['prompt']}"
-            ),
+            format_func=lambda k: DECISION_CLASSIFICATION_OPTIONS[k]["prompt"],
+            key="oe_decision_context_type",
             label_visibility="collapsed",
         )
 
         if selected:
-            st.session_state["oe_decision_context_type_label"] = DECISION_CONTEXT_TYPE_OPTIONS[selected]["label"]
-            st.session_state["oe_suggested_csf_functions"] = DECISION_CONTEXT_TYPE_OPTIONS[selected]["csf_suggested"]
+            st.session_state["oe_decision_context_type"] = selected
+            st.session_state["oe_suggested_csf_functions"] = DECISION_CLASSIFICATION_OPTIONS[selected]["csf_suggested"]
 
-            st.info(
-                "Selected decision context type: "
-                f"**{st.session_state['oe_decision_context_type_label']}**"
-            )
+            st.info("Decision classification recorded.")
 
 
     # ==========================================================
