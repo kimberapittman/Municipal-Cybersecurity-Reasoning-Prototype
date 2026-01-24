@@ -61,11 +61,12 @@ def csf_section_close():
 OE_STEP_TITLES = {
     1: "Scenario Description",
     2: "Decision Point",
-    3: "Decision Context Classification",
-    4: "NIST CSF Mapping",
-    5: "PFCE Analysis and Ethical Tension",
-    6: "Institutional and Governance Constraints",
-    7: "Decision (and documented rationale)",
+    3: "Decision Classification",
+    4: "Stakeholder Identification",
+    5: "NIST CSF Mapping",
+    6: "PFCE Analysis and Ethical Tension",
+    7: "Institutional and Governance Constraints",
+    8: "Decision (and documented rationale)",
 }
 OE_TOTAL_STEPS = max(OE_STEP_TITLES.keys())
 assert set(OE_STEP_TITLES.keys()) == set(range(1, OE_TOTAL_STEPS + 1)), "Step numbers must be contiguous."
@@ -101,6 +102,19 @@ DECISION_CLASSIFICATION_OPTIONS = {
         "csf_suggested": ["RC"],
     },
 }
+
+STAKEHOLDER_OPTIONS = [
+    "Local Residents/Businesses",
+    "City Leadership (Mayor, City Manager, City Council)",
+    "Department leadership (Public Works, Utilities, Police, Fire, etc.)",
+    "IT/Cybersecurity Team",
+    "City Employees/Internal Staff",
+    "Vendors/Managed Service Providers",
+    "State or Federal Partners/Regulators",
+    "Law enforcement / investigative partners",
+    "Finance/Procurement/Legal",
+    "Media/Public Information Office",
+]
 
 
 # Practitioner-friendly NIST CSF 2.0 function prompts for Open-Ended Mode
@@ -386,9 +400,81 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 4: NIST CSF
+    # STEP 4: STAKEHOLDER IDENTIFICATION
     # ==========================================================
     elif step == 4:
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 6px 0;
+                font-weight: 500;
+                color: rgba(229,231,235,0.90);
+                font-size: 1.05rem;
+                line-height: 1.45;
+            ">
+            Which stakeholders are affected by or involved in this decision?
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 0.75rem 0;
+                font-size: 0.9rem;
+                color: rgba(229,231,235,0.65);
+                line-height: 1.4;
+            ">
+            Select all that apply. Add any missing stakeholders under “Other.”
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        selected = st.multiselect(
+            label="Stakeholders",
+            options=STAKEHOLDER_OPTIONS,
+            default=st.session_state.get("oe_stakeholders_selected", []),
+            key="oe_stakeholders_selected",
+            placeholder="Select one or more stakeholders…",
+            label_visibility="collapsed",
+        )
+
+        # “Other” toggle + free text
+        add_other = st.checkbox(
+            "Other stakeholder(s) not listed",
+            key="oe_stakeholders_other_toggle",
+        )
+
+        other_text = ""
+        if add_other:
+            other_text = st.text_area(
+                "Other stakeholders",
+                key="oe_stakeholders_other_text",
+                height=90,
+                placeholder="Example: Regional 911 dispatch, county emergency management, school district IT, union representatives…",
+                label_visibility="collapsed",
+            ).strip()
+
+        # Normalize and store a combined list (for export + downstream logic)
+        other_list = [s.strip() for s in other_text.split(",") if s.strip()] if other_text else []
+        combined = list(dict.fromkeys((selected or []) + other_list))  # de-dup, preserve order
+
+        st.session_state["oe_stakeholders_combined"] = combined
+
+        # Optional confirmation
+        if combined:
+            st.info("Stakeholders recorded: **" + ", ".join(combined) + "**")
+        else:
+            st.warning("Select at least one stakeholder (or add one under “Other”) to continue.")
+            st.stop()
+
+
+    # ==========================================================
+    # STEP 5: NIST CSF
+    # ==========================================================
+    elif step == 5:
         # ---------- CSF Function ----------
         with st.container():
             st.markdown('<div class="csf-func-anchor"></div>', unsafe_allow_html=True)
@@ -399,9 +485,9 @@ def render_open_ended():
             )
 
     # ==========================================================
-    # STEP 5: PFCE + TENSION
+    # STEP 6: PFCE + TENSION
     # ==========================================================
-    elif step == 5:
+    elif step == 6:
 
         # ---------- PFCE principle triage (multi-select) ----------
         with st.container():
@@ -499,9 +585,9 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 6: CONSTRAINTS
+    # STEP 7: CONSTRAINTS
     # ==========================================================
-    elif step == 6:
+    elif step == 7:
         _render_step_tile_html(
             "Document constraints that shape or limit feasible actions or justification.",
         )
@@ -513,9 +599,9 @@ def render_open_ended():
         )
 
     # ==========================================================
-    # STEP 7: DECISION + OUTPUT 
+    # STEP 8: DECISION + OUTPUT 
     # ==========================================================
-    elif step == 7:
+    elif step == 8:
         _render_step_tile_html(
             "Record the decision in operational terms, then generate a structured rationale for demonstration purposes.",
         )
