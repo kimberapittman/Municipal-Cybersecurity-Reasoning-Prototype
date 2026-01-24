@@ -8,11 +8,10 @@ import textwrap
 
 from logic.loaders import (
     load_csf_data,
-    load_pfce_crosswalk,
     load_pfce_principles,
     load_constraints,
 )
-from logic.reasoning import apply_crosswalk, summarize_pfce
+from logic.reasoning import summarize_pfce
 
 
 def _safe_rerun():
@@ -48,16 +47,8 @@ def render_divider():
 
 def render_open_ended():
     step = st.session_state.get("oe_step", 1)
+    step_title = OE_STEP_TITLES.get(step, OE_STEP_TITLES[1])
 
-    STEP_TITLES = {
-        1: "Scenario Description",
-        2: "Technical Context (NIST CSF)",
-        3: "Ethical Considerations",
-        4: "Institutional and Governance Constraints",
-        5: "Decision and Rationale",
-    }
-
-    step_title = STEP_TITLES.get(step, "Scenario Description")
 
     st.markdown(
         f"""
@@ -73,8 +64,6 @@ def render_open_ended():
         """,
         unsafe_allow_html=True,
     )
-
-    # ---- rest of your step rendering logic below ----
 
 
 def csf_section_open(title: str, subtitle: str):
@@ -145,22 +134,22 @@ CSF_FUNCTION_OPTIONS = {
 @st.cache_data
 def _load_core_data():
     csf = load_csf_data()
-    crosswalk = load_pfce_crosswalk()
     pfce = load_pfce_principles()
     constraints = load_constraints()
-    return csf, crosswalk, pfce, constraints
+    return csf, pfce, constraints
 
 OE_STEP_TITLES = {
     1: "Scenario Description",
-    2: "NIST CSF Mapping",
-    3: "PFCE Analysis and Ethical Tension",
-    4: "Institutional and Governance Constraints",
-    5: "Decision (and documented rationale)",
+    2: "Decision Context Classification",
+    3: "NIST CSF Mapping",
+    4: "PFCE Analysis and Ethical Tension",
+    5: "Institutional and Governance Constraints",
+    6: "Decision (and documented rationale)",
 }
 OE_TOTAL_STEPS = len(OE_STEP_TITLES)
 
 
-CSF_DATA, PFCE_CROSSWALK, PFCE_PRINCIPLES, GOV_CONSTRAINTS_RAW = _load_core_data()
+CSF_DATA, PFCE_PRINCIPLES, GOV_CONSTRAINTS_RAW = _load_core_data()
 PFCE_NAMES = [p.get("name", "") for p in PFCE_PRINCIPLES if p.get("name")]
 
 
@@ -433,7 +422,7 @@ def render_open_ended():
                 line-height: 1.45;
             ">
             Describe the situation requiring a decision. Include:
-            <ul class="tight-list" style="margin-bottom: 3rem;">
+            <ul class="tight-list" style="margin-bottom: 1rem;">
                 <li>What happened or what is being proposed</li>
                 <li>When the decision must be made</li>
                 <li>What constraints exist (time, resources, information)</li>
