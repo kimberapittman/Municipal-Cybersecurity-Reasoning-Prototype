@@ -634,7 +634,7 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 4: Technical Obligations
+    # STEP 4: Technical Consideration(s)
     # ==========================================================
     elif step == 4:
         csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, _refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
@@ -651,7 +651,7 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            Which technical considerations are relevant to this decision?
+            Identify the technical obligations implicated by this decision.
             </div>
             """,
             unsafe_allow_html=True
@@ -665,15 +665,17 @@ def render_open_ended():
                 color: rgba(229,231,235,0.65);
                 line-height: 1.4;
             ">
-            Select applicable CSF technical areas and outcomes. Add additional technical considerations only if they are not captured by the CSF selections.
+            First, select the relevant CSF technical areas (categories). Then, select the specific CSF outcomes (technical obligations) implicated by this decision.
+            Add additional technical obligations only if they are not captured by the CSF outcomes.
             </div>
             """,
             unsafe_allow_html=True
         )
 
+        # -----------------------------
+        # A) Select technical areas (categories)
+        # -----------------------------
         selected_cat_ids = []
-        selected_subcat_ids = []
-
         for fn_id in fn_ids:
             fn = csf_fn_index.get(fn_id, {})
             fn_title = fn.get("title", fn_id)
@@ -697,83 +699,107 @@ def render_open_ended():
                 cat_desc = cat.get("description", "")
 
                 cat_checked = st.checkbox(
-                    f"{cat_title}",
+                    cat_title,
                     key=f"oe_csf_cat_{cat_id}",
                     help=cat_desc if cat_desc else None,
                 )
                 if cat_checked:
                     selected_cat_ids.append(cat_id)
 
-                with st.expander("View technical outcomes (optional)", expanded=False):
-                    st.caption("Select outcomes directly implicated by this decision.")
-
-                    for sid in subs_by_cat.get(cat_id, []):
-                        s_text = subcats.get(sid, {}).get("text", sid)
-
-                        s_checked = st.checkbox(
-                            s_text,
-                            key=f"oe_csf_sub_{sid}",
-                        )
-                        if s_checked:
-                            selected_subcat_ids.append(sid)
-
-        # De-dupe, preserve order
         selected_cat_ids = list(dict.fromkeys(selected_cat_ids))
-        selected_subcat_ids = list(dict.fromkeys(selected_subcat_ids))
-
-        # Store CSF selections (IDs) for export
         st.session_state["oe_csf_categories_selected"] = selected_cat_ids
+
+        st.markdown("---")
+
+        # -----------------------------
+        # B) Select technical obligations (outcomes under selected categories)
+        # -----------------------------
+        selected_subcat_ids = []
+
+        if selected_cat_ids:
+            st.markdown(
+                """
+                <div style="margin: 0 0 0.35rem 0; font-weight: 700;">
+                Technical obligations (CSF outcomes)
+                </div>
+                <div style="margin: 0 0 0.75rem 0; color: rgba(229,231,235,0.65); font-size: 0.9rem; line-height: 1.4;">
+                Select the outcomes that are directly implicated by this decision point.
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            for cat_id in selected_cat_ids:
+                cat = categories.get(cat_id, {})
+                cat_title = cat.get("title", cat_id)
+                cat_desc = cat.get("description", "")
+
+                st.markdown(
+                    f"""
+                    <div style="margin: 0.5rem 0 0.25rem 0; font-weight: 800;">
+                    {cat_title}
+                    </div>
+                    <div style="margin: 0 0 0.4rem 0; color: rgba(229,231,235,0.70); font-size: 0.9rem; line-height: 1.35;">
+                    {cat_desc}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                for sid in subs_by_cat.get(cat_id, []):
+                    s_text = (subcats.get(sid, {}) or {}).get("text", sid)
+                    s_checked = st.checkbox(
+                        s_text,
+                        key=f"oe_csf_sub_{sid}",
+                    )
+                    if s_checked:
+                        selected_subcat_ids.append(sid)
+
+        selected_subcat_ids = list(dict.fromkeys(selected_subcat_ids))
         st.session_state["oe_csf_outcomes_selected"] = selected_subcat_ids
 
         st.markdown("---")
 
-        # ----------------------------------------------------------
-        # Unified "Technical Considerations" list for Step 9
-        #   = selected CSF categories + selected CSF outcome texts + user-added items
-        # ----------------------------------------------------------
-        csf_considerations = []
-
-        # Add category titles as considerations
-        for cat_id in selected_cat_ids:
-            title = (categories.get(cat_id, {}) or {}).get("title", cat_id)
-            csf_considerations.append(title)
-
-        # Add selected outcome texts as considerations (shortened for readability)
-        for sid in selected_subcat_ids:
-            text = (subcats.get(sid, {}) or {}).get("text", sid)
-            text_short = (text[:180] + "…") if len(text) > 180 else text
-            csf_considerations.append(text_short)
-
-        # User-added considerations (one per line)
-        st.markdown(
-            """
-            <div style="margin: 0 0 0.5rem 0; color: rgba(229,231,235,0.75); font-size: 0.9rem; line-height: 1.4;">
-            Additional technical considerations (optional). Use short phrases. One per line.
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+        # -----------------------------
+        # C) Additional technical obligations (only if needed)
+        # -----------------------------
         addl_text = st.text_area(
-            "Additional technical considerations",
+            "Additional technical obligations (optional)",
             key="oe_technical_additional_text",
             height=120,
             placeholder=(
+                "Use short phrases. One per line.\n"
                 "Examples:\n"
                 "- Preserve forensic evidence\n"
                 "- Maintain continuity of 911 dispatch workflows\n"
                 "- Prevent lateral movement across segmented networks"
             ),
-            label_visibility="collapsed",
         )
 
         addl_lines = [ln.strip("•- \t").strip() for ln in (addl_text or "").splitlines()]
         addl_considerations = [ln for ln in addl_lines if ln]
 
-        # Final unified list (de-dupe, preserve order)
-        unified = list(dict.fromkeys(csf_considerations + addl_considerations))
+        # -----------------------------
+        # D) Unified list for Step 9 (obligations)
+        # -----------------------------
+        unified = []
 
-        # Persist unified list for Step 9 use
+        # Primary: selected CSF outcomes as obligations
+        for sid in selected_subcat_ids:
+            text = (subcats.get(sid, {}) or {}).get("text", sid)
+            text_short = (text[:180] + "…") if len(text) > 180 else text
+            unified.append(text_short)
+
+        # Secondary (optional): include selected category titles as high-level obligations
+        # Comment this in if you want category-level obligations in Step 9 as well.
+        # for cat_id in selected_cat_ids:
+        #     unified.append((categories.get(cat_id, {}) or {}).get("title", cat_id))
+
+        unified.extend(addl_considerations)
+
+        # De-dupe, preserve order
+        unified = list(dict.fromkeys([u for u in unified if u]))
+
         st.session_state["oe_technical_considerations"] = unified
 
 
