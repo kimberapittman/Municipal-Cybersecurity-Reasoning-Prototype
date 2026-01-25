@@ -569,13 +569,8 @@ def render_open_ended():
         csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
 
         selected_fn = st.session_state.get("oe_csf_function", "")
-        # st.caption(f"DEBUG selected_fn = {selected_fn!r}")  # uncomment once if needed
+        fn_ids = [selected_fn] if selected_fn else list(csf_fn_index.keys())
 
-        if not selected_fn:
-            st.warning("No procedural context selected in Step 3. Showing all CSF functions.")
-            fn_ids = list(csf_fn_index.keys())
-        else:
-            fn_ids = [selected_fn]
 
         # --- Step 5 UI starts here ---
         st.markdown(
