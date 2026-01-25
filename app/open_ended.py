@@ -1,11 +1,12 @@
 import streamlit as st
 from datetime import datetime
 from io import BytesIO
-
+from pathlib import Path
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import LETTER
 import textwrap
 import html
+import json
 
 
 def _safe_rerun():
@@ -61,7 +62,7 @@ def csf_section_close():
 OE_STEP_TITLES = {
     1: "Scenario Description",
     2: "Decision Point",
-    3: "Decision Classification",
+    3: "Procedural Context",
     4: "Stakeholder Identification",
     5: "Technical Considerations",
     6: "Ethical Considerations",
@@ -80,12 +81,11 @@ def oe_init_record():
     st.session_state[OE_RECORD_KEY] = {
         "scenario_description": "",
         "decision_point": "",
-        "decision_classification": "",
+        "procedural_context": "",
 
         "stakeholders": [],
 
         "technical": {
-            "csf_functions": [],
             "csf_categories": [],
             "csf_outcomes": [],
             "other_notes": "",
@@ -118,7 +118,7 @@ OE_KEYMAP = {
     # Steps 1–3
     "scenario_description": "oe_scenario_description",
     "decision_point": "oe_decision_point",
-    "decision_classification": "oe_decision_classification_type",
+    "procedural_context": "oe_csf_function",
 
     # Step 4 (stakeholders)
     "stakeholders_combined": "oe_stakeholders",  # set this yourself after parsing "Other"
@@ -126,7 +126,6 @@ OE_KEYMAP = {
     # Step 5 (technical)
     "technical_other_notes": "oe_technical_other",
     # If you implement CSF mapping checkboxes later, store these lists:
-    "csf_functions": "oe_csf_functions_selected",
     "csf_categories": "oe_csf_categories_selected",
     "csf_outcomes": "oe_csf_outcomes_selected",
 
@@ -159,13 +158,12 @@ def oe_sync_record():
     # Step 1–3
     rec["scenario_description"] = str(_get(km["scenario_description"], "")).strip()
     rec["decision_point"] = str(_get(km["decision_point"], "")).strip()
-    rec["decision_classification"] = str(_get(km["decision_classification"], "")).strip()
+    rec["procedural_context"] = str(_get(km["procedural_context"], "")).strip()
 
     # Step 4
     rec["stakeholders"] = _get(km["stakeholders_combined"], []) or []
 
     # Step 5
-    rec["technical"]["csf_functions"] = _get(km["csf_functions"], []) or []
     rec["technical"]["csf_categories"] = _get(km["csf_categories"], []) or []
     rec["technical"]["csf_outcomes"] = _get(km["csf_outcomes"], []) or []
     rec["technical"]["other_notes"] = str(_get(km["technical_other_notes"], "")).strip()
@@ -188,37 +186,6 @@ def oe_sync_record():
     st.session_state[OE_RECORD_KEY] = rec
 
 
-DECISION_CLASSIFICATION_OPTIONS = {
-    "governance": {
-        "prompt": (
-            "Considering changes to how the organization manages cybersecurity "
-            "(e.g., governance, policy, risk posture, system design, or adoption of new technologies)."
-        ),
-        "csf_suggested": ["GV", "ID"],
-    },
-    "preventive": {
-        "prompt": (
-            "Implementing or adjusting safeguards to reduce cybersecurity risk "
-            "(e.g., access controls, configurations, protections, or preventive measures)."
-        ),
-        "csf_suggested": ["PR"],
-    },
-    "incident_response": {
-        "prompt": (
-            "Responding to an active or suspected cybersecurity incident "
-            "(e.g., detection, containment, investigation, or response actions)."
-        ),
-        "csf_suggested": ["DE", "RS"],
-    },
-    "recovery": {
-        "prompt": (
-            "Restoring systems or services following a cybersecurity incident "
-            "(e.g., recovery sequencing, service restoration, or post-incident actions)."
-        ),
-        "csf_suggested": ["RC"],
-    },
-}
-
 STAKEHOLDER_OPTIONS = [
     "Local Residents/Businesses",
     "City Leadership (Mayor, City Manager, City Council)",
@@ -231,10 +198,6 @@ STAKEHOLDER_OPTIONS = [
     "Finance/Procurement/Legal",
     "Media/Public Information Office",
 ]
-
-import json
-from pathlib import Path
-import streamlit as st
 
 CSF_EXPORT_PATH = Path("data/csf-export.json")  # update if you renamed the file
 
@@ -316,49 +279,30 @@ def load_csf_export_index(path: str):
     return functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat
 
 
-# Practitioner-friendly NIST CSF 2.0 function prompts for Open-Ended Mode
-CSF_FUNCTION_OPTIONS = {
+CSF_FUNCTION_PROMPTS = {
     "GV": {
         "label": "GOVERN (GV)",
-        "prompt": (
-            "Are you establishing, reviewing, or implementing cybersecurity policy, "
-            "governance expectations, or organizational risk strategy?"
-        ),
+        "prompt": "Are you establishing, reviewing, or overseeing cybersecurity risk management strategy, policies, or governance expectations?",
     },
     "ID": {
         "label": "IDENTIFY (ID)",
-        "prompt": (
-            "Are you assessing vulnerabilities, reviewing system risks, or determining "
-            "what assets or stakeholders are affected?"
-        ),
+        "prompt": "Are you working to understand current cybersecurity risks, such as identifying assets, systems, vulnerabilities, or risk exposure?",
     },
     "PR": {
         "label": "PROTECT (PR)",
-        "prompt": (
-            "Are you applying safeguards or controls to prevent unauthorized access or "
-            "data exposure?"
-        ),
+        "prompt": "Are you applying or managing safeguards to reduce or manage cybersecurity risk?",
     },
     "DE": {
         "label": "DETECT (DE)",
-        "prompt": (
-            "Have you observed indicators of compromise or suspicious behavior that "
-            "require investigation?"
-        ),
+        "prompt": "Are you monitoring for, identifying, or analyzing potential cybersecurity attacks or compromises?",
     },
     "RS": {
         "label": "RESPOND (RS)",
-        "prompt": (
-            "Has a cybersecurity incident been detected and you must take action "
-            "immediately?"
-        ),
+        "prompt": "Are you taking action in response to a confirmed cybersecurity incident?",
     },
     "RC": {
         "label": "RECOVER (RC)",
-        "prompt": (
-            "Are you restoring systems, data, or services after an incident and deciding "
-            "what to prioritize or how transparent to be?"
-        ),
+        "prompt": "Are you restoring systems, data, or operations affected by a cybersecurity incident?",
     },
 }
 
@@ -578,7 +522,7 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 3: Decision Classification
+    # STEP 3: Procedural Context
     # ==========================================================
     elif step == 3:
         st.markdown(
@@ -590,28 +534,23 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            Select the classification that most closely aligns with the specific decision you are examining.
+            Which question best matches the procedural situation you are addressing?
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        selected = st.radio(
-            label="Decision classification",
-            options=list(DECISION_CLASSIFICATION_OPTIONS.keys()),
+        selected_fn = st.radio(
+            label="Procedural Context",
+            options=list(CSF_FUNCTION_PROMPTS.keys()),
             index=None,
-            format_func=lambda k: DECISION_CLASSIFICATION_OPTIONS[k]["prompt"],
-            key="oe_decision_classification_type",
+            format_func=lambda k: CSF_FUNCTION_PROMPTS[k]["prompt"],
+            key="oe_csf_function",
             label_visibility="collapsed",
         )
 
-        if selected:
-            st.session_state["oe_suggested_csf_functions"] = (
-                DECISION_CLASSIFICATION_OPTIONS[selected]["csf_suggested"]
-            )
-
-            st.info("Decision classification recorded.")
-
+        label = CSF_FUNCTION_PROMPTS.get(selected_fn, {}).get("label", selected_fn)
+        st.info(f"Procedural context recorded: **{label}**")
 
     # ==========================================================
     # STEP 4: STAKEHOLDER IDENTIFICATION
@@ -694,30 +633,16 @@ def render_open_ended():
     # STEP 5: Technical Considerations
     # ==========================================================
     elif step == 5:
-        functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(
-            str(CSF_EXPORT_PATH)
-        )
+        csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
 
-        # --- Soft gate + fallback: Step 3 is recommended, not required ---
-        suggested = st.session_state.get("oe_suggested_csf_functions", [])
+        selected_fn = st.session_state.get("oe_csf_function")  # single source of truth
 
-        if not suggested:
-            st.warning(
-                "Step 3 (Decision Classification) helps suggest a CSF function. "
-                "You can still proceed by selecting a CSF function here."
-            )
+        if not selected_fn:
+            st.warning("No procedural context selected in Step 3. Showing all CSF functions.")
+            fn_ids = list(csf_fn_index.keys())
+        else:
+            fn_ids = [selected_fn]
 
-            # Fallback: user selects CSF function directly
-            # Store it in the SAME place your downstream logic expects.
-            fallback_fn = st.radio(
-                "Select the CSF function that best matches your procedural situation:",
-                options=functions,  # from your CSF export index
-                key="oe_csf_function_fallback",
-            )
-
-            # Normalize into the same structure used by Step 3
-            st.session_state["oe_suggested_csf_functions"] = [fallback_fn]
-            suggested = [fallback_fn]
 
         # --- Step 5 UI starts here ---
         st.markdown(
@@ -748,10 +673,6 @@ def render_open_ended():
             """,
             unsafe_allow_html=True
         )
-
-        # ✅ Filter based on Step 3 (no guessing about your classification keys)
-        suggested_fns = st.session_state.get("oe_suggested_csf_functions", []) or []
-        fn_ids = suggested_fns if suggested_fns else list(functions.keys())
 
         selected_cat_ids = []
         selected_subcat_ids = []
@@ -833,15 +754,13 @@ def render_open_ended():
             placeholder="Add any decision-specific technical concerns not captured above.",
         )
 
-        # Gate: require at least one category OR subcategory
         if not selected_cat_ids and not selected_subcat_ids:
-            st.warning("Select at least one technical consideration area (or at least one outcome) to continue.")
-            st.stop()
-
-        st.info(
-            f"Technical considerations recorded: **{len(selected_cat_ids)}** category area(s), "
-            f"**{len(selected_subcat_ids)}** outcome(s)."
-        )
+            st.info("Technical considerations recorded: **None selected**")
+        else:
+            st.info(
+                f"Technical considerations recorded: **{len(selected_cat_ids)}** category area(s), "
+                f"**{len(selected_subcat_ids)}** outcome(s)."
+            )
 
 
     # ==========================================================
@@ -1016,8 +935,8 @@ def render_open_ended():
         if combined:
             st.info("Constraints identified: **" + ", ".join(combined) + "**")
         else:
-            st.warning("Identify at least one institutional or governance constraint to continue.")
-            st.stop()
+            st.info("Constraints identified: **None selected**")
+
 
         st.text_area(
             "Reasoning about consequences",
