@@ -1124,12 +1124,6 @@ def render_open_ended():
             st.info("Constraints identified: **None selected**")
 
 
-        st.text_area(
-            "Reasoning about consequences",
-            key="oe_reasoning_tradeoff",
-            height=120,
-        )
-
     # ==========================================================
     # STEP 9: DECISION + OUTPUT 
     # ==========================================================
