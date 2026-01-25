@@ -932,6 +932,9 @@ def main():
             unsafe_allow_html=True,
         )
 
+    with st.sidebar:
+        sidebar_divider()
+
         st.markdown(
             html_block(
                 """
@@ -978,15 +981,10 @@ def main():
         sidebar_divider()
 
         st.markdown(
-            "<h3 style='font-weight:700;'>Tool Foundations</h3>",
-            unsafe_allow_html=True,
-        )
-
-        st.markdown(
             html_block(
                 """
                 <details class="sb-details">
-                  <summary>📚 References</summary>
+                  <summary>📚 Resources</summary>
                   <div class="sb-details-body">
 
                     <div class="sb-p">
