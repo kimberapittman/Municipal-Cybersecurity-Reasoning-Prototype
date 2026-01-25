@@ -690,20 +690,34 @@ def render_open_ended():
             st.warning("Identify at least one stakeholder to continue.")
 
 
-    # ==========================================================
-    # STEP 5: Technical Considerations
-    # ==========================================================
-    elif step == 5:
-        functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(
-            str(CSF_EXPORT_PATH)
+# ==========================================================
+# STEP 5: Technical Considerations
+# ==========================================================
+elif step == 5:
+    functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(
+        str(CSF_EXPORT_PATH)
+    )
+
+    # --- Soft gate + fallback: Step 3 is recommended, not required ---
+    suggested = st.session_state.get("oe_suggested_csf_functions", [])
+
+    if not suggested:
+        st.warning(
+            "Step 3 (Decision Classification) helps suggest a CSF function. "
+            "You can still proceed by selecting a CSF function here."
         )
 
-        # --- Guard: Step 3 must be completed ---
-        if not st.session_state.get("oe_suggested_csf_functions"):
-            st.warning(
-                "Complete Step 3 (Decision Classification) before mapping technical considerations."
-            )
-            st.stop()
+        # Fallback: user selects CSF function directly
+        # Store it in the SAME place your downstream logic expects.
+        fallback_fn = st.radio(
+            "Select the CSF function that best matches your procedural situation:",
+            options=functions,  # from your CSF export index
+            key="oe_csf_function_fallback",
+        )
+
+        # Normalize into the same structure used by Step 3
+        st.session_state["oe_suggested_csf_functions"] = [fallback_fn]
+        suggested = [fallback_fn]
 
         # --- Step 5 UI starts here ---
         st.markdown(
