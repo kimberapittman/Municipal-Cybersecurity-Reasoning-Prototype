@@ -66,8 +66,9 @@ OE_STEP_TITLES = {
     4: "Technical Consideration(s)",
     5: "Stakeholder(s) Identification",
     6: "Ethical Consideration(s)",
-    7: "Institutional and Governance Constraints",
-    8: "Decision (and documented rationale)",
+    7: "Tension Identification",
+    8: "Institutional and Governance Constraints",
+    9: "Decision (and documented rationale)",
 }
 OE_TOTAL_STEPS = max(OE_STEP_TITLES.keys())
 assert set(OE_STEP_TITLES.keys()) == set(range(1, OE_TOTAL_STEPS + 1)), "Step numbers must be contiguous."
@@ -133,14 +134,16 @@ OE_KEYMAP = {
     "ethical_analysis": "oe_pfce_analysis",
     "pfce_principles": "oe_pfce_principles",  # you’ll add this when you implement PFCE selection
 
-    # Step 7 (tension + tradeoff)
+    # Step 7 (tension)
     "tension_a": "oe_tension_a",              # strongly recommend splitting, not one blob
     "tension_b": "oe_tension_b",
     "tradeoff_reasoning": "oe_reasoning_tradeoff",
 
-    # Step 8 (constraints + decision)
+    # Step 8 (institutional and governance constraints)
     "constraints_selected": "oe_constraints",
     "constraints_other": "oe_constraints_other",
+
+    # Step 9 (decision documentation)
     "decision_text": "oe_decision_documentation",
     "decision_rationale": "oe_decision_rationale",
 }
