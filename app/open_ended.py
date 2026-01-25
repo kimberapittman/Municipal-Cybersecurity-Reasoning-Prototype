@@ -96,6 +96,7 @@ def oe_init_record():
         "ethical": {
             "pfce_salience_selected": [],
             "pfce_principles": [],
+            "considerations": [],
             "pfce_pressure_summary": "",
         },
 
@@ -138,6 +139,7 @@ OE_KEYMAP = {
     "pfce_salience_selected": "oe_pfce_salience_selected",
     "pfce_principles": "oe_pfce_principles",
     "pfce_pressure_summary": "oe_pfce_pressure_summary",
+    "ethical_considerations": "oe_ethical_considerations",
 
     # Step 7 (tension)
     "tension_a": "oe_tension_a",              # strongly recommend splitting, not one blob
@@ -181,6 +183,7 @@ def oe_sync_record():
     rec["ethical"]["pfce_salience_selected"] = _get(km["pfce_salience_selected"], []) or []
     rec["ethical"]["pfce_principles"] = _get(km["pfce_principles"], []) or []
     rec["ethical"]["pfce_pressure_summary"] = str(_get(km["pfce_pressure_summary"], "")).strip()
+    rec["ethical"]["considerations"] = _get(km["ethical_considerations"], []) or []
 
     # Step 7
     rec["tension"]["a"] = str(_get(km.get("tension_a", ""), "")).strip()
@@ -401,6 +404,50 @@ OLD_PFCE_PROMPTS = {
     "Autonomy": "Could this decision constrain people’s ability to make informed choices about how they are affected?",
     "Justice": "Could impacts or protections be distributed unevenly across groups or neighborhoods?",
     "Explicability": "Is accountability, transparency, or explainability central to this decision?",
+}
+
+PFCE_SUBNODES = {
+    "Non-maleficence": [
+        "Privacy violations",
+        "Financial harm",
+        "Physical harm",
+        "Psychological harm",
+        "System harm",
+        "Data harm",
+        "Reputational harm",
+    ],
+    "Justice": [
+        "Democracy / Free speech",
+        "Avoiding bias",
+        "Accessibility & usability",
+        "Procedural fairness",
+        "Substantive fairness",
+        "Rights (incl. privacy rights)",
+        "Self defence",
+    ],
+    "Beneficence": [
+        "Promote well-being",
+        "Protect privacy",
+        "Financial benefits",
+        "Reputational benefits",
+        "Connectivity benefits",
+        "Strengthen trust",
+    ],
+    "Autonomy": [
+        "Informed consent",
+        "Control data & access",
+        "Privacy settings",
+        "Ownership",
+        "Respect for persons",
+        "Relationships",
+    ],
+    "Explicability": [
+        "Accountability",
+        "Transparency (incl. privacy policies)",
+        "Responsible use of AI",
+        "Responsibility to protect systems & data",
+        "Professional development & diligence",
+    ],
 }
 
 TEMP_CONSTRAINT_OPTIONS = [
@@ -634,7 +681,7 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 4: Technical Consideration(s)
+    # STEP 4: Technical Obligation(s)
     # ==========================================================
     elif step == 4:
         csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, _refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
@@ -874,121 +921,126 @@ def render_open_ended():
         st.session_state["oe_stakeholders"] = combined
 
     # ==========================================================
-    # STEP 6: Ethical Consideration(s)
+    # STEP 6: Ethical Consideration(s) — PFCE-informed (mirrors Step 4)
     # ==========================================================
     elif step == 6:
 
-        # ---------- A) Ethical Salience Check (checkbox triage; no writing) ----------
+        # ---------- A) Ethical Salience Check (fast triage; optional) ----------
         with st.container():
             st.markdown('<div class="pfce-surfacing-anchor"></div>', unsafe_allow_html=True)
 
             csf_section_open(
                 "Ethical Salience Check",
-                "Select any prompts that indicate this decision has ethically significant pressures. "
-                "If none apply, you may proceed."
+                "Select any statements that apply. This step helps surface whether ethical considerations are in play at this decision point."
             )
 
             selected_salience_ids = []
             for item in PFCE_SURFACING_PROMPTS:
                 sid = item["id"]
-                q = item["prompt"]
-
-                checked = st.checkbox(
-                    q,
-                    key=f"oe_pfce_salience_{sid}",
-                )
-                if checked:
+                text = item["prompt"]
+                if st.checkbox(text, key=f"oe_pfce_salience_{sid}"):
                     selected_salience_ids.append(sid)
 
-            # Persist salience selections for export / later steps
             st.session_state["oe_pfce_salience_selected"] = selected_salience_ids
+            csf_section_close()
+
+        # Derive suggested principles (no gating)
+        suggested = []
+        for item in PFCE_SURFACING_PROMPTS:
+            if item["id"] in (st.session_state.get("oe_pfce_salience_selected") or []):
+                suggested.extend(item.get("maps_to", []))
+        suggested = list(dict.fromkeys(suggested))
+
+        # ---------- B) Select PFCE principle(s) (lenses) ----------
+        with st.container():
+            st.markdown('<div class="pfce-principles-anchor"></div>', unsafe_allow_html=True)
+
+            csf_section_open(
+                "PFCE Principles",
+                "Select any PFCE principles implicated by this decision point. Definitions are available as tooltips."
+            )
+
+            if suggested:
+                st.caption("Suggested based on salience selections (optional): " + ", ".join(suggested))
+
+            selected_pfce = []
+            # Keep ordering stable and consistent with PFCE_DEFINITIONS
+            for pid in PFCE_DEFINITIONS.keys():
+                definition = (PFCE_DEFINITIONS.get(pid, "") or "").strip()
+                default_checked = pid in suggested
+
+                if st.checkbox(
+                    pid,
+                    key=f"oe_pfce_{pid}",
+                    value=default_checked,
+                    help=definition if definition else None,
+                ):
+                    selected_pfce.append(pid)
+
+            st.session_state["oe_pfce_principles"] = selected_pfce
+
+            if selected_pfce:
+                st.info("Principles selected: **" + ", ".join(selected_pfce) + "**")
+            else:
+                st.info("Principles selected: **None selected**")
 
             csf_section_close()
 
-        # ---------- B) Derive implicated PFCE principles from salience selections ----------
-        implicated = []
-        for item in PFCE_SURFACING_PROMPTS:
-            sid = item["id"]
-            if sid in (st.session_state.get("oe_pfce_salience_selected") or []):
-                implicated.extend(item.get("maps_to", []))
+        # ---------- C) Select ethical considerations (PFCE sub-nodes) ----------
+        # These are interpretive cues drawn from PFCE Fig. 1, not an exhaustive obligation list.
+        with st.container():
+            st.markdown('<div class="pfce-considerations-anchor"></div>', unsafe_allow_html=True)
 
-        # De-dupe, preserve order, restrict to known principles
-        known = set(PFCE_DEFINITIONS.keys())
-        implicated = [p for p in list(dict.fromkeys(implicated)) if p in known]
+            csf_section_open(
+                "Ethical Considerations",
+                "Select the PFCE ethical considerations implicated by this decision point. Add additional ethical considerations only if needed."
+            )
 
-        # If no salience selected, clear downstream state and stop UI here (no gating)
-        if not selected_salience_ids:
-            st.session_state["oe_pfce_principles"] = []
-            st.session_state["oe_pfce_pressure"] = {}
-            st.info("Ethical considerations: **None specified**")
-        else:
-            # ---------- C) PFCE Principles Implicated (user can refine) ----------
-            with st.container():
-                st.markdown('<div class="pfce-principles-anchor"></div>', unsafe_allow_html=True)
+            ethical_selected = []
 
-                csf_section_open(
-                    "PFCE Principles Implicated",
-                    "Based on your selections above, the following PFCE principles may be implicated. "
-                    "You may deselect any that do not apply."
-                )
+            selected_pfce = st.session_state.get("oe_pfce_principles", []) or []
+            if not selected_pfce:
+                st.info("No PFCE principles selected. You may proceed without selecting ethical considerations.")
+            else:
+                for pid in selected_pfce:
+                    # Section header per principle
+                    st.markdown(f"**{pid}**")
 
-                selected_pfce = []
-                for pid in implicated:
-                    definition = (PFCE_DEFINITIONS.get(pid, "") or "").strip()
+                    for idx, node in enumerate(PFCE_SUBNODES.get(pid, []), start=1):
+                        if st.checkbox(node, key=f"oe_pfce_node_{pid}_{idx}"):
+                            ethical_selected.append(f"{pid}: {node}")
 
-                    # Use checkbox help tooltips instead of fragile hover hacks
-                    checked = st.checkbox(
-                        pid,
-                        key=f"oe_pfce_implicated_{pid}",
-                        value=True,
-                        help=definition if definition else None,
-                    )
-                    if checked:
-                        selected_pfce.append(pid)
+            st.markdown("---")
 
-                st.session_state["oe_pfce_principles"] = selected_pfce
+            addl_text = st.text_area(
+                "Additional ethical considerations (optional)",
+                key="oe_ethical_additional_text",
+                height=110,
+                placeholder=(
+                    "Use short phrases. One per line.\n"
+                    "Examples:\n"
+                    "- Risk of undermining public trust through delayed disclosure\n"
+                    "- Disproportionate impact on residents without alternative service access"
+                ),
+                label_visibility="collapsed",
+            )
 
-                if selected_pfce:
-                    st.info("Principles selected: **" + ", ".join(selected_pfce) + "**")
-                else:
-                    st.info("Principles selected: **None selected**")
+            addl_lines = [ln.strip("•- \t").strip() for ln in (addl_text or "").splitlines()]
+            addl_items = [ln for ln in addl_lines if ln]
 
-                csf_section_close()
+            # Unified list for Step 9 / export
+            unified = list(dict.fromkeys([x for x in (ethical_selected + addl_items) if x]))
+            st.session_state["oe_ethical_considerations"] = unified
 
-            # ---------- D) Minimal PFCE pressure capture (single short field) ----------
-            with st.container():
-                st.markdown('<div class="pfce-pressure-anchor"></div>', unsafe_allow_html=True)
+            csf_section_close()
 
-                csf_section_open(
-                    "Ethical Pressure (brief)",
-                    "In 1–2 sentences, state what is ethically at stake in this decision. "
-                    "This will support the next step (tension articulation)."
-                )
-
-                # Optional: show the principle-specific prompts as lightweight guidance (no extra fields)
-                if st.session_state.get("oe_pfce_principles"):
-                    with st.expander("View principle-guidance prompts (optional)", expanded=False):
-                        for pid in st.session_state["oe_pfce_principles"]:
-                            q = (PFCE_PRESSURE_PROMPTS.get(pid, {}) or {}).get("prompt", "").strip()
-                            if q:
-                                st.write(f"- **{pid}:** {q}")
-
-                ethical_pressure = st.text_area(
-                    "Ethical pressure",
-                    key="oe_pfce_pressure_summary",
-                    height=110,
-                    placeholder="Example: Maintaining continuity of essential services reduces harm to residents, but rapid containment actions may restrict access and shift burdens unevenly across neighborhoods.",
-                    label_visibility="collapsed",
-                ).strip()
-
-                # Store as a compact structure for export
-                st.session_state["oe_pfce_pressure"] = {
-                    "summary": ethical_pressure,
-                    "principles": st.session_state.get("oe_pfce_principles", []) or [],
-                    "salience_selected": st.session_state.get("oe_pfce_salience_selected", []) or [],
-                }
-
-                csf_section_close()
+        # Keep the old oe_pfce_pressure structure in a harmless default state (so nothing downstream breaks)
+        # You can remove this once you fully migrate Step 9 to use oe_ethical_considerations instead.
+        st.session_state["oe_pfce_pressure"] = {
+            "summary": "",
+            "principles": st.session_state.get("oe_pfce_principles", []) or [],
+            "salience_selected": st.session_state.get("oe_pfce_salience_selected", []) or [],
+        }
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 
     # ==========================================================
