@@ -63,9 +63,9 @@ OE_STEP_TITLES = {
     1: "Scenario Description",
     2: "Decision Point",
     3: "Procedural Context",
-    4: "Stakeholder Identification",
-    5: "Technical Considerations",
-    6: "Ethical Considerations",
+    4: "Technical Consideration(s)",
+    5: "Stakeholder(s) Identification",
+    6: "Ethical Consideration(s)",
     7: "Institutional and Governance Constraints",
     8: "Decision (and documented rationale)",
 }
@@ -83,13 +83,13 @@ def oe_init_record():
         "decision_point": "",
         "procedural_context": "",
 
-        "stakeholders": [],
-
         "technical": {
             "csf_categories": [],
             "csf_outcomes": [],
             "other_notes": "",
         },
+
+        "stakeholders": [],
 
         "ethical": {
             "pfce_principles": [],
@@ -120,14 +120,14 @@ OE_KEYMAP = {
     "decision_point": "oe_decision_point",
     "procedural_context": "oe_csf_function",
 
-    # Step 4 (stakeholders)
-    "stakeholders_combined": "oe_stakeholders",  # set this yourself after parsing "Other"
-
-    # Step 5 (technical)
+    # Step 4 (technical)
     "technical_other_notes": "oe_technical_other",
     # If you implement CSF mapping checkboxes later, store these lists:
     "csf_categories": "oe_csf_categories_selected",
     "csf_outcomes": "oe_csf_outcomes_selected",
+
+    # Step 5 (stakeholders)
+    "stakeholders_combined": "oe_stakeholders",  # set this yourself after parsing "Other"
 
     # Step 6 (ethical)
     "ethical_analysis": "oe_pfce_analysis",
@@ -161,12 +161,12 @@ def oe_sync_record():
     rec["procedural_context"] = str(_get(km["procedural_context"], "")).strip()
 
     # Step 4
-    rec["stakeholders"] = _get(km["stakeholders_combined"], []) or []
-
-    # Step 5
     rec["technical"]["csf_categories"] = _get(km["csf_categories"], []) or []
     rec["technical"]["csf_outcomes"] = _get(km["csf_outcomes"], []) or []
     rec["technical"]["other_notes"] = str(_get(km["technical_other_notes"], "")).strip()
+
+    # Step 5
+    rec["stakeholders"] = _get(km["stakeholders_combined"], []) or []
 
     # Step 6
     rec["ethical"]["analysis"] = str(_get(km["ethical_analysis"], "")).strip()
@@ -563,80 +563,9 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 4: STAKEHOLDER IDENTIFICATION
+    # STEP 4: Technical Considerations
     # ==========================================================
     elif step == 4:
-        st.markdown(
-            """
-            <div style="
-                margin: 0 0 6px 0;
-                font-weight: 500;
-                color: rgba(229,231,235,0.90);
-                font-size: 1.05rem;
-                line-height: 1.45;
-            ">
-            Which stakeholders are affected by or involved in this decision?
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            """
-            <div style="
-                margin: 0 0 0.75rem 0;
-                font-size: 0.9rem;
-                color: rgba(229,231,235,0.65);
-                line-height: 1.4;
-            ">
-            Select all that apply. If a stakeholder is missing, add it under “Other.”
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        selected_stakeholders = []
-
-        # Scannable list (NO fixed-height container so "Other" sits directly under the last item)
-        for stakeholder in STAKEHOLDER_OPTIONS:
-            if st.checkbox(stakeholder, key=f"oe_stakeholders_{hash(stakeholder)}"):
-                selected_stakeholders.append(stakeholder)
-
-
-        # "Other" row: checkbox left, textbox right (appears immediately when checked)
-        col_l, col_r = st.columns([1, 2], gap="large")
-
-        with col_l:
-            add_other = st.checkbox(
-                "Other stakeholder(s) not listed",
-                key="oe_stakeholders_other_toggle",
-            )
-
-        other_text = ""
-        with col_r:
-            if add_other:
-                other_text = st.text_area(
-                    "Other stakeholders",
-                    key="oe_stakeholders_other_text",
-                    height=80,
-                    placeholder="Example: Regional 911 dispatch, county emergency management, union representatives",
-                    label_visibility="collapsed",
-                ).strip()
-            else:
-                st.empty()
-
-        # Parse “Other” into list (comma-separated), combine, de-dupe
-        other_list = [s.strip() for s in other_text.split(",") if s.strip()]
-        combined = list(dict.fromkeys(selected_stakeholders + other_list))
-
-        # Persist
-        st.session_state["oe_stakeholders"] = combined
-
-
-    # ==========================================================
-    # STEP 5: Technical Considerations
-    # ==========================================================
-    elif step == 5:
         csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
 
         selected_fn = st.session_state.get("oe_csf_function", "")
@@ -751,6 +680,77 @@ def render_open_ended():
                 f"Technical considerations recorded: **{len(selected_cat_ids)}** category area(s), "
                 f"**{len(selected_subcat_ids)}** outcome(s)."
             )
+
+
+    # ==========================================================
+    # STEP 5: STAKEHOLDER IDENTIFICATION
+    # ==========================================================
+    elif step == 5:
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 6px 0;
+                font-weight: 500;
+                color: rgba(229,231,235,0.90);
+                font-size: 1.05rem;
+                line-height: 1.45;
+            ">
+            Which stakeholders are affected by or involved in this decision?
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 0.75rem 0;
+                font-size: 0.9rem;
+                color: rgba(229,231,235,0.65);
+                line-height: 1.4;
+            ">
+            Select all that apply. If a stakeholder is missing, add it under “Other.”
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        selected_stakeholders = []
+
+        # Scannable list (NO fixed-height container so "Other" sits directly under the last item)
+        for stakeholder in STAKEHOLDER_OPTIONS:
+            if st.checkbox(stakeholder, key=f"oe_stakeholders_{hash(stakeholder)}"):
+                selected_stakeholders.append(stakeholder)
+
+
+        # "Other" row: checkbox left, textbox right (appears immediately when checked)
+        col_l, col_r = st.columns([1, 2], gap="large")
+
+        with col_l:
+            add_other = st.checkbox(
+                "Other stakeholder(s) not listed",
+                key="oe_stakeholders_other_toggle",
+            )
+
+        other_text = ""
+        with col_r:
+            if add_other:
+                other_text = st.text_area(
+                    "Other stakeholders",
+                    key="oe_stakeholders_other_text",
+                    height=80,
+                    placeholder="Example: Regional 911 dispatch, county emergency management, union representatives",
+                    label_visibility="collapsed",
+                ).strip()
+            else:
+                st.empty()
+
+        # Parse “Other” into list (comma-separated), combine, de-dupe
+        other_list = [s.strip() for s in other_text.split(",") if s.strip()]
+        combined = list(dict.fromkeys(selected_stakeholders + other_list))
+
+        # Persist
+        st.session_state["oe_stakeholders"] = combined
 
 
     # ==========================================================
