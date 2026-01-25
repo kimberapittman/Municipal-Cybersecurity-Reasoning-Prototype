@@ -366,6 +366,10 @@ def _build_pdf(title: str, lines: list[str]) -> BytesIO:
 
     c.setFont("Helvetica", 10)
 
+    code = rec.get("procedural_context", "").strip()
+    label = CSF_FUNCTION_PROMPTS.get(code, {}).get("label", code or "Not specified")
+    lines.append(f"Procedural Context: {label}")
+
     for raw in lines:
         wrapped = textwrap.wrap(raw, width=100) if raw else [""]
         for wline in wrapped:
