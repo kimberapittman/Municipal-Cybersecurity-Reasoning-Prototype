@@ -649,9 +649,9 @@ def render_open_ended():
 
         # Scannable list (NO fixed-height container so "Other" sits directly under the last item)
         for stakeholder in STAKEHOLDER_OPTIONS:
-            if st.checkbox (stakeholder), key=f"oe_stakeholders_{hash(stakeholder)}"
-
+            if st.checkbox(stakeholder, key=f"oe_stakeholders_{hash(stakeholder)}"):
                 selected_stakeholders.append(stakeholder)
+
 
         # "Other" row: checkbox left, textbox right (appears immediately when checked)
         col_l, col_r = st.columns([1, 2], gap="large")
