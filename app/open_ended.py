@@ -539,13 +539,13 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            Which question best matches the procedural situation you are addressing?
+            Which selection best matches the procedural situation you are addressing?
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        options = ["— Select one —"] + list(CSF_FUNCTION_PROMPTS.keys())
+        options = list(CSF_FUNCTION_PROMPTS.keys())
 
         selected = st.radio(
             label="Procedural Context",
@@ -635,12 +635,6 @@ def render_open_ended():
 
         # Persist
         st.session_state["oe_stakeholders"] = combined
-
-        # Feedback + gating
-        if combined:
-            st.info("Stakeholders identified: **" + ", ".join(combined) + "**")
-        else:
-            st.warning("Identify at least one stakeholder to continue.")
 
 
     # ==========================================================
@@ -735,20 +729,6 @@ def render_open_ended():
                         )
                         if s_checked:
                             selected_subcat_ids.append(sid)
-
-                        # Optional informative references (show only when selected)
-                        if s_checked:
-                            refs = refs_by_subcat.get(sid, [])
-                            if refs:
-                                with st.expander("View related guidance (optional)", expanded=False):
-                                    # Show a capped list to avoid dumping dozens of refs
-                                    for ref in refs[:8]:
-                                        name = ref.get("doc_name", "Source")
-                                        ver = ref.get("doc_version", "")
-                                        elem = ref.get("dest_element_identifier", "")
-                                        st.write(f"- {name}{f' ({ver})' if ver else ''} — {elem}")
-                                    if len(refs) > 8:
-                                        st.caption(f"{len(refs)-8} additional references available (not shown).")
 
         # De-dupe, preserve order
         selected_cat_ids = list(dict.fromkeys(selected_cat_ids))
