@@ -63,9 +63,9 @@ OE_STEP_TITLES = {
     1: "Scenario Description",
     2: "Decision Point",
     3: "Procedural Context",
-    4: "Technical Consideration(s)",
+    4: "Technical Obligation(s)",
     5: "Stakeholder(s) Identification",
-    6: "Ethical Consideration(s)",
+    6: "Ethical Obligation(s)",
     7: "Tension Identification",
     8: "Institutional and Governance Constraints",
     9: "Decision (and documented rationale)",
@@ -87,6 +87,7 @@ def oe_init_record():
         "technical": {
             "csf_categories": [],
             "csf_outcomes": [],
+            "considerations": [],
             "other_notes": "",
         },
 
@@ -127,6 +128,8 @@ OE_KEYMAP = {
     # If you implement CSF mapping checkboxes later, store these lists:
     "csf_categories": "oe_csf_categories_selected",
     "csf_outcomes": "oe_csf_outcomes_selected",
+    "technical_considerations": "oe_technical_considerations",
+
 
     # Step 5 (stakeholders)
     "stakeholders_combined": "oe_stakeholders",  # set this yourself after parsing "Other"
@@ -169,6 +172,7 @@ def oe_sync_record():
     rec["technical"]["csf_categories"] = _get(km["csf_categories"], []) or []
     rec["technical"]["csf_outcomes"] = _get(km["csf_outcomes"], []) or []
     rec["technical"]["other_notes"] = str(_get(km["technical_other_notes"], "")).strip()
+    rec["technical"]["considerations"] = _get(km["technical_considerations"], []) or []
 
     # Step 5
     rec["stakeholders"] = _get(km["stakeholders_combined"], []) or []
@@ -630,16 +634,14 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 4: Technical Consideration(s)
+    # STEP 4: Technical Obligations
     # ==========================================================
     elif step == 4:
-        csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
+        csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, _refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
 
         selected_fn = st.session_state.get("oe_csf_function", "")
         fn_ids = [selected_fn] if selected_fn else list(csf_fn_index.keys())
 
-
-        # --- Step 5 UI starts here ---
         st.markdown(
             """
             <div style="
@@ -663,7 +665,7 @@ def render_open_ended():
                 color: rgba(229,231,235,0.65);
                 line-height: 1.4;
             ">
-            Select the technical consideration areas that apply. Optionally, expand an area to identify the technical outcomes implicated by this decision.
+            Select applicable CSF technical areas and outcomes. Add additional technical considerations only if they are not captured by the CSF selections.
             </div>
             """,
             unsafe_allow_html=True
@@ -699,11 +701,9 @@ def render_open_ended():
                     key=f"oe_csf_cat_{cat_id}",
                     help=cat_desc if cat_desc else None,
                 )
-
                 if cat_checked:
                     selected_cat_ids.append(cat_id)
 
-                # Subcategory outcomes are optional and can be selected even if category isn't checked
                 with st.expander("View technical outcomes (optional)", expanded=False):
                     st.caption("Select outcomes directly implicated by this decision.")
 
@@ -721,19 +721,60 @@ def render_open_ended():
         selected_cat_ids = list(dict.fromkeys(selected_cat_ids))
         selected_subcat_ids = list(dict.fromkeys(selected_subcat_ids))
 
-        # Store for export
+        # Store CSF selections (IDs) for export
         st.session_state["oe_csf_categories_selected"] = selected_cat_ids
-        st.session_state["oe_csf_outcomes_selected"] = selected_subcat_ids  # subcategory IDs
-        # Optional: record whether references were used (you can toggle this later if you want)
-        # st.session_state["oe_informative_refs_viewed"] = True/False  (if you add a button)
+        st.session_state["oe_csf_outcomes_selected"] = selected_subcat_ids
 
         st.markdown("---")
-        st.text_area(
-            "Other technical considerations (optional)",
-            key="oe_technical_other",
-            height=90,
-            placeholder="Add any decision-specific technical concerns not captured above.",
+
+        # ----------------------------------------------------------
+        # Unified "Technical Considerations" list for Step 9
+        #   = selected CSF categories + selected CSF outcome texts + user-added items
+        # ----------------------------------------------------------
+        csf_considerations = []
+
+        # Add category titles as considerations
+        for cat_id in selected_cat_ids:
+            title = (categories.get(cat_id, {}) or {}).get("title", cat_id)
+            csf_considerations.append(title)
+
+        # Add selected outcome texts as considerations (shortened for readability)
+        for sid in selected_subcat_ids:
+            text = (subcats.get(sid, {}) or {}).get("text", sid)
+            text_short = (text[:180] + "…") if len(text) > 180 else text
+            csf_considerations.append(text_short)
+
+        # User-added considerations (one per line)
+        st.markdown(
+            """
+            <div style="margin: 0 0 0.5rem 0; color: rgba(229,231,235,0.75); font-size: 0.9rem; line-height: 1.4;">
+            Additional technical considerations (optional). Use short phrases. One per line.
+            </div>
+            """,
+            unsafe_allow_html=True
         )
+
+        addl_text = st.text_area(
+            "Additional technical considerations",
+            key="oe_technical_additional_text",
+            height=120,
+            placeholder=(
+                "Examples:\n"
+                "- Preserve forensic evidence\n"
+                "- Maintain continuity of 911 dispatch workflows\n"
+                "- Prevent lateral movement across segmented networks"
+            ),
+            label_visibility="collapsed",
+        )
+
+        addl_lines = [ln.strip("•- \t").strip() for ln in (addl_text or "").splitlines()]
+        addl_considerations = [ln for ln in addl_lines if ln]
+
+        # Final unified list (de-dupe, preserve order)
+        unified = list(dict.fromkeys(csf_considerations + addl_considerations))
+
+        # Persist unified list for Step 9 use
+        st.session_state["oe_technical_considerations"] = unified
 
 
     # ==========================================================
