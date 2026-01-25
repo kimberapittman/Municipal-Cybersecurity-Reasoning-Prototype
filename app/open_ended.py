@@ -236,7 +236,7 @@ import json
 from pathlib import Path
 import streamlit as st
 
-CSF_EXPORT_PATH = Path("data/csf/csf-export.json")  # update if you renamed the file
+CSF_EXPORT_PATH = Path("data/csf-export.json")  # update if you renamed the file
 
 @st.cache_data(show_spinner=False)
 def load_csf_export_index(path: str):
