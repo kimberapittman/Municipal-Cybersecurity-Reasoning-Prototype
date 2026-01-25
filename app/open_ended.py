@@ -354,6 +354,34 @@ PFCE_DEFINITIONS = {
     ),
 }
 
+PFCE_SURFACING_PROMPTS = [
+    {
+        "id": "harm_disadvantage",
+        "prompt": "Who could be harmed or disadvantaged by this decision—even indirectly?",
+        "maps_to": ["Non-maleficence", "Justice"],
+    },
+    {
+        "id": "cost_of_failure",
+        "prompt": "Who bears the cost if this decision goes wrong?",
+        "maps_to": ["Justice", "Non-maleficence"],
+    },
+    {
+        "id": "rights_dependencies",
+        "prompt": "What rights, expectations, or dependencies could be affected?",
+        "maps_to": ["Autonomy", "Beneficence"],
+    },
+    {
+        "id": "public_justification",
+        "prompt": "What would be hardest to justify publicly if questioned later?",
+        "maps_to": ["Explicability", "Justice", "Non-maleficence"],
+    },
+    {
+        "id": "ethical_discomfort",
+        "prompt": "What would feel ethically uncomfortable even if technically justified?",
+        "maps_to": ["Beneficence", "Non-maleficence", "Explicability"],
+    },
+]
+
 OLD_PFCE_PROMPTS = {
     "Beneficence": "Could this decision affect human well-being or access to essential services?",
     "Non-maleficence": "Could this decision foreseeably cause harm (directly or indirectly)?",
