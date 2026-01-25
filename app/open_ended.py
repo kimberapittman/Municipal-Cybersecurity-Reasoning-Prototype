@@ -839,7 +839,7 @@ def render_open_ended():
             pfce_ids = list(PFCE_DEFINITIONS.keys())
 
             for pid in pfce_ids:
-                prompt = (PFCE_PROMPTS.get(pid, "") or "").strip()
+                prompt = (PFCE_SURFACING_PROMPTS.get(pid, "") or "").strip()
                 definition = (PFCE_DEFINITIONS.get(pid, "") or "").strip()
 
                 checked = st.checkbox(
