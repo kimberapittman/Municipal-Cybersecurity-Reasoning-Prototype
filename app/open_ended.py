@@ -951,8 +951,8 @@ def render_open_ended():
                 color: rgba(229,231,235,0.65);
                 line-height: 1.4;
             ">
-            State the tension as two justified considerations that cannot both be fully satisfied at this decision point.
-            These considerations may be ethical, technical, or both.
+            State the tension as two justified <b>obligations or commitments</b> that cannot both be fully satisfied at this decision point.
+            These may be ethical, technical, or both.
             </div>
             """,
             unsafe_allow_html=True
@@ -988,31 +988,17 @@ def render_open_ended():
             if ethical_pressure:
                 st.write("**Ethical pressure (brief):** " + ethical_pressure)
 
-        # ---- Optional tension type label (no gating) ----
-        st.radio(
-            "Tension type (optional)",
-            options=[
-                "Not specified",
-                "Ethical–Technical",
-                "Technical–Technical",
-                "Ethical–Ethical",
-            ],
-            index=0,
-            key="oe_tension_type",
-            horizontal=True,
-        )
-
         # ---- Decision tension input ----
         with st.container():
             st.markdown('<div class="tension-anchor"></div>', unsafe_allow_html=True)
 
             csf_section_open(
                 "Decision Tension",
-                "Write two justified considerations that pull in different directions at this decision point."
+                "Write two justified obligations or commitments that pull in different directions at this decision point."
             )
 
             a = st.text_area(
-                "Consideration A",
+                "Obligation / Commitment A",
                 key="oe_tension_a",
                 height=90,
                 placeholder=(
@@ -1022,7 +1008,7 @@ def render_open_ended():
             )
 
             b = st.text_area(
-                "Consideration B",
+                "Obligation / Commitment B",
                 key="oe_tension_b",
                 height=90,
                 placeholder=(
@@ -1031,17 +1017,34 @@ def render_open_ended():
                 ),
             )
 
-            # Persist neutral tension statement for export (no assumptions)
             a_clean = (a or "").strip()
             b_clean = (b or "").strip()
 
+            # Persist neutral statement for export (no assumptions)
             st.session_state["oe_tension_statement"] = f"{a_clean}  ⟷  {b_clean}".strip(" ⟷ ")
 
-            # Optional lightweight feedback
-            if a_clean or b_clean:
-                st.caption("Tension captured for later justification and export.")
+            # Optional classification AFTER tension is articulated (no gating)
+            if a_clean and b_clean:
+                st.radio(
+                    "Tension type (optional)",
+                    options=[
+                        "Not specified",
+                        "Ethical–Technical",
+                        "Technical–Technical",
+                        "Ethical–Ethical",
+                    ],
+                    index=0,
+                    key="oe_tension_type",
+                    horizontal=True,
+                )
+                st.caption("Decision tension captured for later justification and export.")
+            elif a_clean or b_clean:
+                st.caption("Partial tension noted. Enter both obligations to optionally label the tension type.")
+                # Keep type neutral if they haven't articulated both sides
+                st.session_state["oe_tension_type"] = "Not specified"
             else:
                 st.caption("No tension recorded.")
+                st.session_state["oe_tension_type"] = "Not specified"
 
             csf_section_close()
 
