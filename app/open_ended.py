@@ -103,9 +103,9 @@ def oe_init_record():
         "tension": {
             "a": "",
             "b": "",
+            "statement": "",
+            "type": "Not specified",
         },
-
-        "tradeoff_reasoning": "",
 
         "constraints": {
             "selected": [],
@@ -115,6 +115,7 @@ def oe_init_record():
         "decision": {
             "decision_text": "",
             "documented_rationale": "",
+            "tradeoff_reasoning": "",
         },
     }
 
@@ -145,6 +146,9 @@ OE_KEYMAP = {
     "tension_a": "oe_tension_a",              # strongly recommend splitting, not one blob
     "tension_b": "oe_tension_b",
     "tradeoff_reasoning": "oe_reasoning_tradeoff",
+    "tension_type": "oe_tension_type",
+    "tension_statement": "oe_tension_statement",
+
 
     # Step 8 (institutional and governance constraints)
     "constraints_selected": "oe_constraints",
@@ -186,12 +190,24 @@ def oe_sync_record():
     rec["ethical"]["considerations"] = _get(km["ethical_considerations"], []) or []
 
     # Step 7
-    rec["tension"]["a"] = str(_get(km.get("tension_a", ""), "")).strip()
-    rec["tension"]["b"] = str(_get(km.get("tension_b", ""), "")).strip()
-    rec["tradeoff_reasoning"] = str(_get(km["tradeoff_reasoning"], "")).strip()
-    rec["tension"]["statement"] = (
-        f"{rec['tension']['a']}  ⟷  {rec['tension']['b']}".strip(" ⟷ ")
-)
+    a = str(_get(km.get("tension_a", ""), "")).strip()
+    b = str(_get(km.get("tension_b", ""), "")).strip()
+
+    rec["tension"]["a"] = a
+    rec["tension"]["b"] = b
+
+    # Derive statement centrally (single source of truth)
+    rec["tension"]["statement"] = f"{a}  ⟷  {b}".strip(" ⟷ ")
+
+    # Explicitly store classification (if any)
+    rec["tension"]["type"] = str(
+        _get(km.get("tension_type", ""), "Not specified")
+    ).strip() or "Not specified"
+
+    # Optional downstream reasoning
+    rec["tradeoff_reasoning"] = str(
+        _get(km["tradeoff_reasoning"], "")
+    ).strip()
 
     # Step 8
     rec["constraints"]["selected"] = _get(km["constraints_selected"], []) or []
@@ -1044,7 +1060,7 @@ def render_open_ended():
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 
     # ==========================================================
-    # STEP 7: TENSION IDENTIFICATION
+    # STEP 7: TENSION IDENTIFICATION (selection-based)
     # ==========================================================
     elif step == 7:
         st.markdown(
@@ -1056,7 +1072,7 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            What is the central decision tension at this decision point?
+            Identify the central decision tension at this decision point.
             </div>
             """,
             unsafe_allow_html=True
@@ -1070,102 +1086,116 @@ def render_open_ended():
                 color: rgba(229,231,235,0.65);
                 line-height: 1.4;
             ">
-            State the tension as two justified <b>obligations or commitments</b> that cannot both be fully satisfied at this decision point.
+            Select two obligations or commitments that cannot both be fully satisfied at this decision point.
             These may be ethical, technical, or both.
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # ---- Optional context cues (pull-through from earlier steps) ----
-        decision_point = (st.session_state.get("oe_decision_point", "") or "").strip()
+        # Pull obligations from prior steps
+        tech = st.session_state.get("oe_technical_considerations", []) or []
+        ethical = st.session_state.get("oe_ethical_considerations", []) or []
 
-        csf_code = (st.session_state.get("oe_csf_function", "") or "").strip()
-        csf_label = CSF_FUNCTION_PROMPTS.get(csf_code, {}).get("label", csf_code) if csf_code else "Not specified"
+        # Minimal guardrails (no gating)
+        if not tech and not ethical:
+            st.info("No technical or ethical obligations were recorded in prior steps.")
+            st.session_state["oe_tension_a"] = ""
+            st.session_state["oe_tension_b"] = ""
+            st.session_state["oe_tension_type"] = "Not specified"
+            st.session_state["oe_tension_statement"] = ""
+        else:
+            # Build a unified list of selectable obligations with stable IDs
+            items = []  # each item: {"id":..., "text":..., "origin":...}
 
-        tech_cats = st.session_state.get("oe_csf_categories_selected", []) or []
-        tech_outs = st.session_state.get("oe_csf_outcomes_selected", []) or []
-        tech_other = (st.session_state.get("oe_technical_other", "") or "").strip()
+            for i, t in enumerate(tech):
+                items.append({"id": f"tech::{i}", "text": t, "origin": "technical"})
 
-        salience = st.session_state.get("oe_pfce_salience_selected", []) or []
-        principles = st.session_state.get("oe_pfce_principles", []) or []
-        ethical_pressure = (st.session_state.get("oe_pfce_pressure_summary", "") or "").strip()
+            for i, e in enumerate(ethical):
+                items.append({"id": f"eth::{i}", "text": e, "origin": "ethical"})
 
-        with st.expander("View context cues (optional)", expanded=False):
-            if decision_point:
-                st.write(f"**Decision point:** {decision_point}")
-            st.write(f"**Procedural context (CSF):** {csf_label}")
+            placeholder_id = "__none__"
 
-            st.write(f"**Technical selections:** {len(tech_cats)} category area(s), {len(tech_outs)} outcome(s)")
-            if tech_other:
-                st.write(f"**Other technical notes:** {tech_other}")
+            # Maps for display and lookup
+            id_to_text = {it["id"]: it["text"] for it in items}
+            id_to_origin = {it["id"]: it["origin"] for it in items}
 
-            if salience:
-                st.write(f"**Ethical salience flags selected:** {len(salience)}")
-            if principles:
-                st.write("**PFCE principles implicated:** " + ", ".join(principles))
-            if ethical_pressure:
-                st.write("**Ethical pressure (brief):** " + ethical_pressure)
+            # Selection UI: use IDs as the values, show text to user
+            with st.container():
+                st.markdown('<div class="tension-anchor"></div>', unsafe_allow_html=True)
 
-        # ---- Decision tension input ----
-        with st.container():
-            st.markdown('<div class="tension-anchor"></div>', unsafe_allow_html=True)
-
-            csf_section_open(
-                "Decision Tension",
-                "Write two justified obligations or commitments that pull in different directions at this decision point."
-            )
-
-            a = st.text_area(
-                "Obligation / Commitment A",
-                key="oe_tension_a",
-                height=90,
-                placeholder=(
-                    "Example (technical): Maintain system availability and service continuity.\n"
-                    "Example (ethical): Avoid harm to residents dependent on disrupted services."
-                ),
-            )
-
-            b = st.text_area(
-                "Obligation / Commitment B",
-                key="oe_tension_b",
-                height=90,
-                placeholder=(
-                    "Example (technical): Contain compromise quickly to prevent wider spread.\n"
-                    "Example (ethical): Preserve transparency and accountability in communications."
-                ),
-            )
-
-            a_clean = (a or "").strip()
-            b_clean = (b or "").strip()
-
-            # Persist neutral statement for export (no assumptions)
-            st.session_state["oe_tension_statement"] = f"{a_clean}  ⟷  {b_clean}".strip(" ⟷ ")
-
-            # Optional classification AFTER tension is articulated (no gating)
-            if a_clean and b_clean:
-                st.radio(
-                    "Tension type (optional)",
-                    options=[
-                        "Not specified",
-                        "Ethical–Technical",
-                        "Technical–Technical",
-                        "Ethical–Ethical",
-                    ],
-                    index=0,
-                    key="oe_tension_type",
-                    horizontal=True,
+                csf_section_open(
+                    "Decision Tension",
+                    "Select the two competing obligations that best represent the tension."
                 )
-                st.caption("Decision tension captured for later justification and export.")
-            elif a_clean or b_clean:
-                st.caption("Partial tension noted. Enter both obligations to optionally label the tension type.")
-                # Keep type neutral if they haven't articulated both sides
-                st.session_state["oe_tension_type"] = "Not specified"
-            else:
-                st.caption("No tension recorded.")
-                st.session_state["oe_tension_type"] = "Not specified"
 
-            csf_section_close()
+                all_ids = [placeholder_id] + [it["id"] for it in items]
+
+                a_id = st.selectbox(
+                    "Obligation / Commitment A",
+                    options=all_ids,
+                    index=0,
+                    key="oe_tension_a_id",
+                    format_func=lambda x: "— Select an obligation —" if x == placeholder_id else id_to_text.get(x, ""),
+                )
+
+                # Filter B list to prevent choosing the same item twice
+                b_ids = [placeholder_id] + [it["id"] for it in items if it["id"] != a_id]
+
+                b_id = st.selectbox(
+                    "Obligation / Commitment B",
+                    options=b_ids,
+                    index=0,
+                    key="oe_tension_b_id",
+                    format_func=lambda x: "— Select an obligation —" if x == placeholder_id else id_to_text.get(x, ""),
+                )
+
+                a_clean = "" if a_id == placeholder_id else id_to_text.get(a_id, "").strip()
+                b_clean = "" if b_id == placeholder_id else id_to_text.get(b_id, "").strip()
+
+                st.session_state["oe_tension_a"] = a_clean
+                st.session_state["oe_tension_b"] = b_clean
+                st.session_state["oe_tension_statement"] = f"{a_clean}  ⟷  {b_clean}".strip(" ⟷ ")
+
+                # Infer tension type only when both are selected
+                if a_clean and b_clean:
+                    a_type = id_to_origin.get(a_id, "")
+                    b_type = id_to_origin.get(b_id, "")
+
+                    if a_type == "ethical" and b_type == "ethical":
+                        ttype = "Ethical–Ethical"
+                    elif a_type == "technical" and b_type == "technical":
+                        ttype = "Technical–Technical"
+                    elif (a_type in ("ethical", "technical")) and (b_type in ("ethical", "technical")):
+                        ttype = "Ethical–Technical"
+                    else:
+                        ttype = "Not specified"
+
+                    st.session_state["oe_tension_type"] = ttype
+                    st.caption(f"Tension type inferred: **{ttype}**")
+
+                elif a_clean or b_clean:
+                    st.session_state["oe_tension_type"] = "Not specified"
+                    st.caption("Partial tension noted. Select both sides to capture the tension.")
+                else:
+                    st.session_state["oe_tension_type"] = "Not specified"
+                    st.caption("No tension recorded.")
+
+                csf_section_close()
+
+            # Optional override (only after both are selected)
+            if st.session_state.get("oe_tension_a") and st.session_state.get("oe_tension_b"):
+                override = st.checkbox("Override inferred tension type (optional)", key="oe_tension_override_toggle")
+                if override:
+                    st.radio(
+                        "Tension type",
+                        options=["Not specified", "Ethical–Technical", "Technical–Technical", "Ethical–Ethical"],
+                        index=["Not specified", "Ethical–Technical", "Technical–Technical", "Ethical–Ethical"].index(
+                            st.session_state.get("oe_tension_type", "Not specified")
+                        ),
+                        key="oe_tension_type",
+                        horizontal=True,
+                    )
 
 
     # ==========================================================
