@@ -71,6 +71,122 @@ OE_STEP_TITLES = {
 OE_TOTAL_STEPS = max(OE_STEP_TITLES.keys())
 assert set(OE_STEP_TITLES.keys()) == set(range(1, OE_TOTAL_STEPS + 1)), "Step numbers must be contiguous."
 
+OE_RECORD_KEY = "oe_record"
+
+def oe_init_record():
+    if OE_RECORD_KEY in st.session_state:
+        return
+
+    st.session_state[OE_RECORD_KEY] = {
+        "scenario_description": "",
+        "decision_point": "",
+        "decision_classification": "",
+
+        "stakeholders": [],
+
+        "technical": {
+            "csf_functions": [],
+            "csf_categories": [],
+            "csf_outcomes": [],
+            "other_notes": "",
+        },
+
+        "ethical": {
+            "pfce_principles": [],
+            "analysis": "",
+        },
+
+        "tension": {
+            "a": "",
+            "b": "",
+        },
+
+        "tradeoff_reasoning": "",
+
+        "constraints": {
+            "selected": [],
+            "other": "",
+        },
+
+        "decision": {
+            "decision_text": "",
+            "documented_rationale": "",
+        },
+    }
+
+OE_KEYMAP = {
+    # Steps 1–3
+    "scenario_description": "oe_scenario_description",
+    "decision_point": "oe_decision_point",
+    "decision_classification": "oe_decision_classification_type",
+
+    # Step 4 (stakeholders)
+    "stakeholders_combined": "oe_stakeholders",  # set this yourself after parsing "Other"
+
+    # Step 5 (technical)
+    "technical_other_notes": "oe_technical_consideration",
+    # If you implement CSF mapping checkboxes later, store these lists:
+    "csf_functions": "oe_csf_functions_selected",
+    "csf_categories": "oe_csf_categories_selected",
+    "csf_outcomes": "oe_csf_outcomes_selected",
+
+    # Step 6 (ethical)
+    "ethical_analysis": "oe_ethical_consideration",
+    "pfce_principles": "oe_pfce_principles",  # you’ll add this when you implement PFCE selection
+
+    # Step 7 (tension + tradeoff)
+    "tension_a": "oe_tension_a",              # strongly recommend splitting, not one blob
+    "tension_b": "oe_tension_b",
+    "tradeoff_reasoning": "oe_reasoning_tradeoff",
+
+    # Step 8 (constraints + decision)
+    "constraints_selected": "oe_constraints",
+    "constraints_other": "oe_constraints_other",
+    "decision_text": "oe_decision_documentation",
+    "decision_rationale": "oe_decision_rationale",
+}
+
+def oe_sync_record():
+    rec = st.session_state.get(OE_RECORD_KEY)
+    if not rec:
+        return
+
+    km = OE_KEYMAP
+
+    def _get(key, default=""):
+        return st.session_state.get(key, default)
+
+    # Step 1–3
+    rec["scenario_description"] = str(_get(km["scenario_description"], "")).strip()
+    rec["decision_point"] = str(_get(km["decision_point"], "")).strip()
+    rec["decision_classification"] = str(_get(km["decision_classification"], "")).strip()
+
+    # Step 4
+    rec["stakeholders"] = _get(km["stakeholders_combined"], []) or []
+
+    # Step 5
+    rec["technical"]["csf_functions"] = _get(km["csf_functions"], []) or []
+    rec["technical"]["csf_categories"] = _get(km["csf_categories"], []) or []
+    rec["technical"]["csf_outcomes"] = _get(km["csf_outcomes"], []) or []
+    rec["technical"]["other_notes"] = str(_get(km["technical_other_notes"], "")).strip()
+
+    # Step 6
+    rec["ethical"]["analysis"] = str(_get(km["ethical_analysis"], "")).strip()
+    rec["ethical"]["pfce_principles"] = _get(km["pfce_principles"], []) or []
+
+    # Step 7
+    rec["tension"]["a"] = str(_get(km.get("tension_a", ""), "")).strip()
+    rec["tension"]["b"] = str(_get(km.get("tension_b", ""), "")).strip()
+    rec["tradeoff_reasoning"] = str(_get(km["tradeoff_reasoning"], "")).strip()
+
+    # Step 8
+    rec["constraints"]["selected"] = _get(km["constraints_selected"], []) or []
+    rec["constraints"]["other"] = str(_get(km["constraints_other"], "")).strip()
+    rec["decision"]["decision_text"] = str(_get(km["decision_text"], "")).strip()
+    rec["decision"]["documented_rationale"] = str(_get(km["decision_rationale"], "")).strip()
+
+    st.session_state[OE_RECORD_KEY] = rec
+
 
 DECISION_CLASSIFICATION_OPTIONS = {
     "governance": {
@@ -115,6 +231,89 @@ STAKEHOLDER_OPTIONS = [
     "Finance/Procurement/Legal",
     "Media/Public Information Office",
 ]
+
+import json
+from pathlib import Path
+import streamlit as st
+
+CSF_EXPORT_PATH = Path("data/csf/csf-export.json")  # update if you renamed the file
+
+@st.cache_data(show_spinner=False)
+def load_csf_export_index(path: str):
+    """
+    Builds indexes from the NIST CSF reference-tool export schema.
+    Returns:
+      functions: {FN_ID: {"title":..., "description":...}}
+      categories: {CAT_ID: {"title":..., "description":..., "function": FN_ID}}
+      subcats: {SUB_ID: {"text":..., "category": CAT_ID}}
+      cats_by_fn: {FN_ID: [CAT_ID, ...]}
+      subs_by_cat: {CAT_ID: [SUB_ID, ...]}
+      refs_by_subcat: {SUB_ID: [ {doc_name, doc_version, doc_url, dest_element_identifier} ... ]}
+    """
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+
+    elems = raw.get("response", {}).get("elements", {}).get("elements", [])
+    docs = raw.get("response", {}).get("elements", {}).get("documents", [])
+    rels = raw.get("response", {}).get("elements", {}).get("relationships", [])
+
+    doc_map = {d.get("doc_identifier"): d for d in docs if d.get("doc_identifier")}
+
+    functions = {}
+    categories = {}
+    subcats = {}
+    cats_by_fn = {}
+    subs_by_cat = {}
+    refs_by_subcat = {}
+
+    # --- Parse CSF core elements ---
+    for e in elems:
+        if e.get("doc_identifier") != "CSF_2_0_0":
+            continue
+
+        et = e.get("element_type")
+        eid = e.get("element_identifier")
+        title = (e.get("title") or "").strip()
+        text = (e.get("text") or "").strip()
+
+        if et == "function":
+            functions[eid] = {"title": title or eid, "description": text}
+            cats_by_fn.setdefault(eid, [])
+
+        elif et == "category":
+            fn_id = eid.split(".")[0]  # GV.OC -> GV
+            categories[eid] = {"title": title or eid, "description": text, "function": fn_id}
+            cats_by_fn.setdefault(fn_id, []).append(eid)
+            subs_by_cat.setdefault(eid, [])
+
+        elif et == "subcategory":
+            cat_id = eid.split("-")[0]  # GV.OC-01 -> GV.OC
+            subcats[eid] = {"text": text, "category": cat_id}
+            subs_by_cat.setdefault(cat_id, []).append(eid)
+
+    # Dedupe category lists
+    for fn_id, lst in cats_by_fn.items():
+        cats_by_fn[fn_id] = list(dict.fromkeys(lst))
+
+    # --- Parse informative references (external_reference relationships) ---
+    for r in rels:
+        if r.get("relationship_identifier") != "external_reference":
+            continue
+        if r.get("source_doc_identifier") != "CSF_2_0_0":
+            continue
+
+        src_subcat = r.get("source_element_identifier")  # e.g., GV.OC-01
+        dest_doc = r.get("dest_doc_identifier")
+        dest_elem = r.get("dest_element_identifier")
+
+        d = doc_map.get(dest_doc, {})
+        refs_by_subcat.setdefault(src_subcat, []).append({
+            "doc_name": d.get("name") or dest_doc,
+            "doc_version": d.get("version") or "",
+            "doc_url": d.get("website") or "",
+            "dest_element_identifier": dest_elem or "",
+        })
+
+    return functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat
 
 
 # Practitioner-friendly NIST CSF 2.0 function prompts for Open-Ended Mode
@@ -258,6 +457,8 @@ def _render_open_header(step: int):
 
 
 def render_open_ended():
+    oe_init_record()
+
     if "oe_step" not in st.session_state:
         st.session_state["oe_step"] = 1
 
@@ -436,7 +637,7 @@ def render_open_ended():
 
         # Scannable list (NO fixed-height container so "Other" sits directly under the last item)
         for stakeholder in STAKEHOLDER_OPTIONS:
-            if st.checkbox(stakeholder, key=f"oe_stakeholder_{stakeholder}"):
+            if st.checkbox(stakeholder, key=f"oe_stakeholders_{stakeholder}"):
                 selected_stakeholders.append(stakeholder)
 
         # "Other" row: checkbox left, textbox right (appears immediately when checked)
@@ -445,7 +646,7 @@ def render_open_ended():
         with col_l:
             add_other = st.checkbox(
                 "Other stakeholder(s) not listed",
-                key="oe_stakeholder_other_toggle",
+                key="oe_stakeholders",
             )
 
         other_text = ""
@@ -453,7 +654,7 @@ def render_open_ended():
             if add_other:
                 other_text = st.text_area(
                     "Other stakeholders",
-                    key="oe_stakeholder_other_text",
+                    key="oe_stakeholders_other_text",
                     height=80,
                     placeholder="Example: Regional 911 dispatch, county emergency management, union representatives",
                     label_visibility="collapsed",
@@ -477,17 +678,144 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 5: NIST CSF
+    # STEP 5: NIST CSF Mapping (Technical Considerations)
     # ==========================================================
     elif step == 5:
-        # ---------- CSF Function ----------
-        with st.container():
-            st.markdown('<div class="csf-func-anchor"></div>', unsafe_allow_html=True)
+        functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(
+            str(CSF_EXPORT_PATH)
+        )
 
-            csf_section_open(
-                "NIST CSF Function",
-                "Within your current decision context, where are you operating in the cybersecurity process?"
+        # --- Guard: Step 3 must be completed ---
+        if not st.session_state.get("oe_suggested_csf_functions"):
+            st.warning(
+                "Complete Step 3 (Decision Classification) before mapping technical considerations."
             )
+            st.stop()
+
+        # --- Step 5 UI starts here ---
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 6px 0;
+                font-weight: 500;
+                color: rgba(229,231,235,0.90);
+                font-size: 1.05rem;
+                line-height: 1.45;
+            ">
+            Which technical considerations are relevant to this decision?
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 0.85rem 0;
+                font-size: 0.9rem;
+                color: rgba(229,231,235,0.65);
+                line-height: 1.4;
+            ">
+            Select the technical consideration areas that apply. Optionally, expand an area to identify the technical outcomes implicated by this decision.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # ✅ Filter based on Step 3 (no guessing about your classification keys)
+        suggested_fns = st.session_state.get("oe_suggested_csf_functions", []) or []
+        fn_ids = suggested_fns if suggested_fns else list(functions.keys())
+
+        selected_cat_ids = []
+        selected_subcat_ids = []
+
+        for fn_id in fn_ids:
+            fn = functions.get(fn_id, {})
+            fn_title = fn.get("title", fn_id)
+            fn_desc = fn.get("description", "")
+
+            st.markdown(
+                f"""
+                <div style="margin: 0.75rem 0 0.25rem 0; font-weight: 800;">
+                {fn_title}
+                </div>
+                <div style="margin: 0 0 0.5rem 0; color: rgba(229,231,235,0.70); font-size: 0.9rem; line-height: 1.4;">
+                {fn_desc}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            for cat_id in cats_by_fn.get(fn_id, []):
+                cat = categories.get(cat_id, {})
+                cat_title = cat.get("title", cat_id)
+                cat_desc = cat.get("description", "")
+
+                cat_checked = st.checkbox(
+                    f"{cat_title}",
+                    key=f"oe_csf_cat_{cat_id}",
+                    help=cat_desc if cat_desc else None,
+                )
+
+                if cat_checked:
+                    selected_cat_ids.append(cat_id)
+
+                # Subcategory outcomes are optional and can be selected even if category isn't checked
+                with st.expander("View technical outcomes (optional)", expanded=False):
+                    st.caption("Select outcomes directly implicated by this decision.")
+
+                    for sid in subs_by_cat.get(cat_id, []):
+                        s_text = subcats.get(sid, {}).get("text", sid)
+
+                        s_checked = st.checkbox(
+                            s_text,
+                            key=f"oe_csf_sub_{sid}",
+                        )
+                        if s_checked:
+                            selected_subcat_ids.append(sid)
+
+                        # Optional informative references (show only when selected)
+                        if s_checked:
+                            refs = refs_by_subcat.get(sid, [])
+                            if refs:
+                                with st.expander("View related guidance (optional)", expanded=False):
+                                    # Show a capped list to avoid dumping dozens of refs
+                                    for ref in refs[:8]:
+                                        name = ref.get("doc_name", "Source")
+                                        ver = ref.get("doc_version", "")
+                                        elem = ref.get("dest_element_identifier", "")
+                                        st.write(f"- {name}{f' ({ver})' if ver else ''} — {elem}")
+                                    if len(refs) > 8:
+                                        st.caption(f"{len(refs)-8} additional references available (not shown).")
+
+        # De-dupe, preserve order
+        selected_cat_ids = list(dict.fromkeys(selected_cat_ids))
+        selected_subcat_ids = list(dict.fromkeys(selected_subcat_ids))
+
+        # Store for export
+        st.session_state["oe_csf_categories_selected"] = selected_cat_ids
+        st.session_state["oe_csf_outcomes_selected"] = selected_subcat_ids  # subcategory IDs
+        # Optional: record whether references were used (you can toggle this later if you want)
+        # st.session_state["oe_informative_refs_viewed"] = True/False  (if you add a button)
+
+        st.markdown("---")
+        st.text_area(
+            "Other technical considerations (optional)",
+            key="oe_technical_other",
+            height=90,
+            placeholder="Add any decision-specific technical concerns not captured above.",
+        )
+
+        # Gate: require at least one category OR subcategory
+        if not selected_cat_ids and not selected_subcat_ids:
+            st.warning("Select at least one technical consideration area (or at least one outcome) to continue.")
+            st.stop()
+
+        st.info(
+            f"Technical considerations recorded: **{len(selected_cat_ids)}** category area(s), "
+            f"**{len(selected_subcat_ids)}** outcome(s)."
+        )
+
 
     # ==========================================================
     # STEP 6: PFCE + TENSION
@@ -618,6 +946,10 @@ def render_open_ended():
             placeholder="Example: Disconnect additional systems while confirming scope; preserve critical service workflows via manual workarounds.",
         )
 
+    oe_sync_record()
+    rec = st.session_state[OE_RECORD_KEY]
+    # export rec
+
 
     # NAV CONTROLS
     with st.container():
@@ -627,7 +959,8 @@ def render_open_ended():
 
         with col_l:
             if step > 1:
-                if st.button("◀ Previous", key=f"oenav_prev_{step}", use_container_width=False):
+                if st.button("◀ Previous", key=f"oenav_prev_{step}"):
+                    _oe_sync_record()
                     st.session_state["oe_step"] = step - 1
                     _safe_rerun()
             else:
@@ -635,7 +968,8 @@ def render_open_ended():
 
         with col_r:
             if step < total_steps:
-                if st.button("Next ▶", key=f"oenav_next_{step}", use_container_width=False):
+                if st.button("Next ▶", key=f"oenav_next_{step}"):
+                    _oe_sync_record()
                     st.session_state["oe_step"] = step + 1
                     _safe_rerun()
             else:
