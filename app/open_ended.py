@@ -1032,7 +1032,7 @@ def render_open_ended():
         # export rec (PDF generation, etc.) goes here
 
 
-    # NAV CONTROLS
+    # NAV CONTROLS (NO GATING)
     with st.container():
         st.markdown('<div class="oe-nav-anchor"></div>', unsafe_allow_html=True)
 
@@ -1048,20 +1048,14 @@ def render_open_ended():
 
         with col_r:
             if step < total_steps:
-
-                # ---- GATE NEXT (Open-Ended mode) ----
-                next_disabled = False
-                if step == 4:
-                    next_disabled = not st.session_state.get("oe_step4_complete", False)
-
-                if st.button("Next ▶", key=f"oenav_next_{step}", disabled=next_disabled):
+                if st.button("Next ▶", key=f"oenav_next_{step}"):
                     st.session_state["oe_step"] = step + 1
                     _safe_rerun()
-
             else:
                 if st.button("Generate PDF", key="oe_generate_pdf", use_container_width=False):
                     st.session_state["oe_generate"] = True
                     _safe_rerun()
+
 
 
 
