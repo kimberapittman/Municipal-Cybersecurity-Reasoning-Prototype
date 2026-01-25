@@ -690,34 +690,34 @@ def render_open_ended():
             st.warning("Identify at least one stakeholder to continue.")
 
 
-# ==========================================================
-# STEP 5: Technical Considerations
-# ==========================================================
-elif step == 5:
-    functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(
-        str(CSF_EXPORT_PATH)
-    )
-
-    # --- Soft gate + fallback: Step 3 is recommended, not required ---
-    suggested = st.session_state.get("oe_suggested_csf_functions", [])
-
-    if not suggested:
-        st.warning(
-            "Step 3 (Decision Classification) helps suggest a CSF function. "
-            "You can still proceed by selecting a CSF function here."
+    # ==========================================================
+    # STEP 5: Technical Considerations
+    # ==========================================================
+    elif step == 5:
+        functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(
+            str(CSF_EXPORT_PATH)
         )
 
-        # Fallback: user selects CSF function directly
-        # Store it in the SAME place your downstream logic expects.
-        fallback_fn = st.radio(
-            "Select the CSF function that best matches your procedural situation:",
-            options=functions,  # from your CSF export index
-            key="oe_csf_function_fallback",
-        )
+        # --- Soft gate + fallback: Step 3 is recommended, not required ---
+        suggested = st.session_state.get("oe_suggested_csf_functions", [])
 
-        # Normalize into the same structure used by Step 3
-        st.session_state["oe_suggested_csf_functions"] = [fallback_fn]
-        suggested = [fallback_fn]
+        if not suggested:
+            st.warning(
+                "Step 3 (Decision Classification) helps suggest a CSF function. "
+                "You can still proceed by selecting a CSF function here."
+            )
+
+            # Fallback: user selects CSF function directly
+            # Store it in the SAME place your downstream logic expects.
+            fallback_fn = st.radio(
+                "Select the CSF function that best matches your procedural situation:",
+                options=functions,  # from your CSF export index
+                key="oe_csf_function_fallback",
+            )
+
+            # Normalize into the same structure used by Step 3
+            st.session_state["oe_suggested_csf_functions"] = [fallback_fn]
+            suggested = [fallback_fn]
 
         # --- Step 5 UI starts here ---
         st.markdown(
