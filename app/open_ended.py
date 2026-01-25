@@ -609,6 +609,7 @@ def render_open_ended():
             st.session_state["oe_suggested_csf_functions"] = DECISION_CLASSIFICATION_OPTIONS[selected]["csf_suggested"]
 
             st.info("Decision classification recorded.")
+            st.session_state["oe_step4_complete"] = bool(combined)
 
 
     # ==========================================================
@@ -648,7 +649,8 @@ def render_open_ended():
 
         # Scannable list (NO fixed-height container so "Other" sits directly under the last item)
         for stakeholder in STAKEHOLDER_OPTIONS:
-            if st.checkbox(stakeholder, key=f"oe_stakeholders_{stakeholder}"):
+            if st.checkbox (stakeholder), key=f"oe_stakeholders_{hash(stakeholder)}"
+
                 selected_stakeholders.append(stakeholder)
 
         # "Other" row: checkbox left, textbox right (appears immediately when checked)
@@ -1030,7 +1032,6 @@ def render_open_ended():
         # export rec (PDF generation, etc.) goes here
 
 
-
     # NAV CONTROLS
     with st.container():
         st.markdown('<div class="oe-nav-anchor"></div>', unsafe_allow_html=True)
@@ -1047,12 +1048,20 @@ def render_open_ended():
 
         with col_r:
             if step < total_steps:
-                if st.button("Next ▶", key=f"oenav_next_{step}"):
+
+                # ---- GATE NEXT (Open-Ended mode) ----
+                next_disabled = False
+                if step == 4:
+                    next_disabled = not st.session_state.get("oe_step4_complete", False)
+
+                if st.button("Next ▶", key=f"oenav_next_{step}", disabled=next_disabled):
                     st.session_state["oe_step"] = step + 1
                     _safe_rerun()
+
             else:
                 if st.button("Generate PDF", key="oe_generate_pdf", use_container_width=False):
                     st.session_state["oe_generate"] = True
                     _safe_rerun()
+
 
 
