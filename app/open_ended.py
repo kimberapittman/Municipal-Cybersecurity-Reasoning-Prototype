@@ -124,14 +124,14 @@ OE_KEYMAP = {
     "stakeholders_combined": "oe_stakeholders",  # set this yourself after parsing "Other"
 
     # Step 5 (technical)
-    "technical_other_notes": "oe_technical_consideration",
+    "technical_other_notes": "oe_technical_other",
     # If you implement CSF mapping checkboxes later, store these lists:
     "csf_functions": "oe_csf_functions_selected",
     "csf_categories": "oe_csf_categories_selected",
     "csf_outcomes": "oe_csf_outcomes_selected",
 
     # Step 6 (ethical)
-    "ethical_analysis": "oe_ethical_consideration",
+    "ethical_analysis": "oe_pfce_analysis",
     "pfce_principles": "oe_pfce_principles",  # you’ll add this when you implement PFCE selection
 
     # Step 7 (tension + tradeoff)
@@ -594,7 +594,6 @@ def render_open_ended():
         )
 
         if selected:
-            st.session_state["oe_decision_classification_type"] = selected
             st.session_state["oe_suggested_csf_functions"] = DECISION_CLASSIFICATION_OPTIONS[selected]["csf_suggested"]
 
             st.info("Decision classification recorded.")
@@ -646,7 +645,7 @@ def render_open_ended():
         with col_l:
             add_other = st.checkbox(
                 "Other stakeholder(s) not listed",
-                key="oe_stakeholders",
+                key="oe_stakeholders_other_toggle",
             )
 
         other_text = ""
@@ -925,10 +924,22 @@ def render_open_ended():
             "Document constraints that shape or limit feasible actions or justification.",
         )
 
+        st.multiselect(
+            "Constraints (select any that apply)",
+            options=GOV_CONSTRAINTS,
+            key="oe_constraints",
+        )
+
         st.text_area(
             "Other constraints (optional)",
             key="oe_constraints_other",
             height=90,
+        )
+
+        st.text_area(
+            "Reasoning about consequences",
+            key="oe_reasoning_tradeoff",
+            height=120,
         )
 
     # ==========================================================
@@ -941,14 +952,17 @@ def render_open_ended():
 
         st.text_area(
             "Decision (operational)",
-            key="oe_decision",
+            key="oe_decision_documentation",
             height=120,
             placeholder="Example: Disconnect additional systems while confirming scope; preserve critical service workflows via manual workarounds.",
         )
 
-    oe_sync_record()
-    rec = st.session_state[OE_RECORD_KEY]
-    # export rec
+        # ✅ Sync record ONLY here (or on Next/Prev)
+        oe_sync_record()
+        rec = st.session_state[OE_RECORD_KEY]
+
+        # export rec (PDF generation, etc.) goes here
+
 
 
     # NAV CONTROLS
@@ -960,7 +974,6 @@ def render_open_ended():
         with col_l:
             if step > 1:
                 if st.button("◀ Previous", key=f"oenav_prev_{step}"):
-                    _oe_sync_record()
                     st.session_state["oe_step"] = step - 1
                     _safe_rerun()
             else:
@@ -969,7 +982,6 @@ def render_open_ended():
         with col_r:
             if step < total_steps:
                 if st.button("Next ▶", key=f"oenav_next_{step}"):
-                    _oe_sync_record()
                     st.session_state["oe_step"] = step + 1
                     _safe_rerun()
             else:
