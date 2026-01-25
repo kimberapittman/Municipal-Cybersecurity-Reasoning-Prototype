@@ -530,13 +530,15 @@ def render_open_ended():
     # STEP 3: Procedural Context
     # ==========================================================
     elif step == 3:
-        # Always reset the radio when entering Step 3
-        st.session_state.pop("oe_csf_function_choice", None)
-        st.session_state["oe_csf_function"] = ""
-
         st.markdown(
             """
-            <div style="margin: 0 0 6px 0; font-weight: 500;">
+            <div style="
+                margin: 0 0 6px 0;
+                font-weight: 500;
+                color: rgba(229,231,235,0.90);
+                font-size: 1.05rem;
+                line-height: 1.45;
+            ">
             Which question best matches the procedural situation you are addressing?
             </div>
             """,
@@ -546,16 +548,18 @@ def render_open_ended():
         selected = st.radio(
             label="Procedural Context",
             options=list(CSF_FUNCTION_PROMPTS.keys()),
-            index=None, 
+            index=None,  # no default selection
             format_func=lambda k: CSF_FUNCTION_PROMPTS[k]["prompt"],
             key="oe_csf_function_choice",
             label_visibility="collapsed",
         )
 
-        code = st.session_state.get("oe_csf_function", "")
-        if code:
-            label = CSF_FUNCTION_PROMPTS.get(code, {}).get("label", code)
+        if selected:
+            st.session_state["oe_csf_function"] = selected
+            label = CSF_FUNCTION_PROMPTS.get(selected, {}).get("label", selected)
             st.info(f"Procedural context informed by NIST CSF Function: **{label}**")
+        else:
+            st.session_state["oe_csf_function"] = ""
 
 
     # ==========================================================
