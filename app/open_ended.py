@@ -306,6 +306,29 @@ CSF_FUNCTION_PROMPTS = {
     },
 }
 
+PFCE_PRESSURE_PROMPTS = {
+    "Beneficence": {
+        "label": "Beneficence",
+        "prompt": "What benefit is being protected or promoted—and for whom?",
+    },
+    "Non-maleficence": {
+        "label": "Non-maleficence",
+        "prompt": "What foreseeable harm is being avoided or accepted?",
+    },
+    "Autonomy": {
+        "label": "Autonomy",
+        "prompt": "Whose choices or agency are being constrained, overridden, or preserved?",
+    },
+    "Justice": {
+        "label": "Justice",
+        "prompt": "Are impacts or protections distributed unevenly across groups or communities?",
+    },
+    "Explicability": {
+        "label": "Explicability",
+        "prompt": "What would be difficult to explain, justify, or defend about this decision?",
+    },
+}
+
 
 PFCE_DEFINITIONS = {
     "Beneficence": (
@@ -331,7 +354,7 @@ PFCE_DEFINITIONS = {
     ),
 }
 
-PFCE_PROMPTS = {
+OLD_PFCE_PROMPTS = {
     "Beneficence": "Could this decision affect human well-being or access to essential services?",
     "Non-maleficence": "Could this decision foreseeably cause harm (directly or indirectly)?",
     "Autonomy": "Could this decision constrain people’s ability to make informed choices about how they are affected?",
@@ -563,7 +586,7 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 4: Technical Considerations
+    # STEP 4: Technical Consideration(s)
     # ==========================================================
     elif step == 4:
         csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
@@ -668,14 +691,6 @@ def render_open_ended():
             placeholder="Add any decision-specific technical concerns not captured above.",
         )
 
-        if not selected_cat_ids and not selected_subcat_ids:
-            st.info("Technical considerations recorded: **None selected**")
-        else:
-            st.info(
-                f"Technical considerations recorded: **{len(selected_cat_ids)}** category area(s), "
-                f"**{len(selected_subcat_ids)}** outcome(s)."
-            )
-
 
     # ==========================================================
     # STEP 5: STAKEHOLDER IDENTIFICATION
@@ -749,40 +764,66 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 6: PFCE + TENSION
+    # STEP 6: Ethical Consideration(s)
     # ==========================================================
     elif step == 6:
-    
-        # ---------- PFCE principle triage (multi-select) ----------
+
+        # ---------- A) Pre-principle surfacing ----------
+        with st.container():
+            st.markdown('<div class="pfce-surfacing-anchor"></div>', unsafe_allow_html=True)
+
+            csf_section_open(
+                "Ethical Salience Check",
+                "Answer the prompts below to surface ethically significant impacts and pressures associated with this decision point."
+            )
+
+            for item in PFCE_SURFACING_PROMPTS:
+                st.text_area(
+                    item["prompt"],
+                    key=f"oe_pfce_surface_{item['id']}",
+                    height=90,
+                    placeholder="1–2 sentences (optional).",
+                )
+
+            csf_section_close()
+
+        # Optional: “suggested lenses” based on which surfacing prompts have text
+        suggested = []
+        for item in PFCE_SURFACING_PROMPTS:
+            val = (st.session_state.get(f"oe_pfce_surface_{item['id']}", "") or "").strip()
+            if val:
+                suggested.extend(item["maps_to"])
+        suggested = list(dict.fromkeys(suggested))  # de-dupe, preserve order
+
+        # ---------- B) PFCE mapping (select lenses) ----------
         with st.container():
             st.markdown('<div class="pfce-principles-anchor"></div>', unsafe_allow_html=True)
 
             csf_section_open(
-                "PFCE Principle Triage",
-                "Use the prompts below to identify which PFCE principles are implicated by this decision context. "
-                "This does not prescribe outcomes; it structures ethical reasoning."
+                "PFCE Principle Mapping",
+                "Select the PFCE principles that best help explain why the impacts you identified are ethically significant. This does not prescribe outcomes; it structures ethical reasoning."
             )
 
+            if suggested:
+                st.caption("Suggested lenses based on your responses (optional): " + ", ".join(suggested))
+
             selected_pfce_ids = []
-            pfce_ids = list(PFCE_DEFINITIONS.keys())  # e.g., ["Beneficence", "Non-maleficence", ...]
+            pfce_ids = list(PFCE_DEFINITIONS.keys())
 
-            # Keep list scannable; definitions available on demand
-            with st.container(height=280):
-                for pid in pfce_ids:
-                    prompt = PFCE_PROMPTS.get(pid, "").strip()
-                    definition = PFCE_DEFINITIONS.get(pid, "").strip()
+            for pid in pfce_ids:
+                prompt = (PFCE_PROMPTS.get(pid, "") or "").strip()
+                definition = (PFCE_DEFINITIONS.get(pid, "") or "").strip()
 
-                    checked = st.checkbox(
-                        f"**{pid}** — {prompt}" if prompt else f"**{pid}**",
-                        key=f"oe_pfce_{pid}",
-                    )
-                    if checked:
-                        selected_pfce_ids.append(pid)
+                checked = st.checkbox(
+                    f"**{pid}** — {prompt}" if prompt else f"**{pid}**",
+                    key=f"oe_pfce_{pid}",
+                )
+                if checked:
+                    selected_pfce_ids.append(pid)
 
-                    # Optional definition without clutter
-                    if definition:
-                        with st.expander(f"View {pid} definition", expanded=False):
-                            st.write(definition)
+                if definition:
+                    with st.expander(f"View {pid} definition", expanded=False):
+                        st.write(definition)
 
             st.session_state["oe_pfce_principles"] = selected_pfce_ids
 
@@ -793,65 +834,97 @@ def render_open_ended():
 
             csf_section_close()
 
-        if not st.session_state.get("oe_pfce_principles"):
-            st.warning("Select at least one PFCE principle to continue to analysis and ethical tension.")
-        else:
+        # ---------- C) PFCE pressure prompts (principle-specific articulation) ----------
+        with st.container():
+            st.markdown('<div class="pfce-pressure-anchor"></div>', unsafe_allow_html=True)
 
+            csf_section_open(
+                "PFCE Pressure Prompts",
+                "For each selected principle, briefly state how it is implicated in this decision point."
+            )
 
-            # ---------- PFCE analysis (now grounded in selected principles) ----------
-            with st.container():
-                st.markdown('<div class="pfce-analysis-anchor"></div>', unsafe_allow_html=True)
+            selected_pfce_ids = st.session_state.get("oe_pfce_principles", []) or []
 
-                csf_section_open(
-                    "PFCE Analysis",
-                    "In 2–4 sentences, explain what is ethically significant about this decision context using the selected principles as reference points."
-                )
+            if not selected_pfce_ids:
+                st.info("No PFCE principles selected. You may still proceed to articulate an ethical tension.")
+            else:
+                for pid in selected_pfce_ids:
+                    q = PFCE_PRESSURE_PROMPTS.get(pid, {}).get("prompt", "")
+                    st.text_area(
+                        f"{pid} — {q}",
+                        key=f"oe_pfce_pressure_{pid}",
+                        height=90,
+                        placeholder="1–2 sentences.",
+                    )
 
-                st.text_area(
-                    "PFCE analysis",
-                    key="oe_pfce_analysis",
-                    height=160,
-                    placeholder=(
-                        "Example: Containment actions may reduce spread but disrupt essential services; "
-                        "limited visibility constrains defensible scoping; impacts may fall unevenly across residents."
-                    ),
-                    label_visibility="collapsed",
-                )
-
-                csf_section_close()
-
-            # ---------- Ethical tension (two justified obligations) ----------
-            with st.container():
-                st.markdown('<div class="pfce-tension-anchor"></div>', unsafe_allow_html=True)
-
-                csf_section_open(
-                    "Ethical Tension",
-                    "State the central tension as two justified obligations that cannot both be fully fulfilled."
-                )
-
-                a = st.text_area(
-                    "Obligation A",
-                    key="oe_tension_a",
-                    height=90,
-                    placeholder="Example: Maintain continuity of essential services to prevent harm to residents.",
-                )
-
-                b = st.text_area(
-                    "Obligation B",
-                    key="oe_tension_b",
-                    height=90,
-                    placeholder="Example: Contain the threat quickly to prevent wider compromise and longer disruption.",
-                )
-
-                st.session_state["oe_ethical_tension"] = f"{a.strip()}  ⟷  {b.strip()}".strip(" ⟷ ")
-
-                csf_section_close()
-
+            csf_section_close()
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
 
     # ==========================================================
-    # STEP 7: INSTITUTIONAL AND GOVERNANCE CONSTRAINTS
+    # STEP 7: TENSION IDENTIFICATION
     # ==========================================================
     elif step == 7:
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 6px 0;
+                font-weight: 500;
+                color: rgba(229,231,235,0.90);
+                font-size: 1.05rem;
+                line-height: 1.45;
+            ">
+            What institutional or governance constraints shape this decision?
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 0.75rem 0;
+                font-size: 0.9rem;
+                color: rgba(229,231,235,0.65);
+                line-height: 1.4;
+            ">
+            Select all that apply. These constraints limit or shape feasible actions or justifications.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # ---------- Ethical tension (two justified obligations) ----------
+        with st.container():
+            st.markdown('<div class="pfce-tension-anchor"></div>', unsafe_allow_html=True)
+
+            csf_section_open(
+                "Ethical Tension",
+                "State the central tension as two justified obligations that cannot both be fully fulfilled."
+            )
+
+            a = st.text_area(
+                "Obligation A",
+                key="oe_tension_a",
+                height=90,
+                placeholder="Example: Maintain continuity of essential services to prevent harm to residents.",
+            )
+
+            b = st.text_area(
+                "Obligation B",
+                key="oe_tension_b",
+                height=90,
+                placeholder="Example: Contain the threat quickly to prevent wider compromise and longer disruption.",
+            )
+
+            st.session_state["oe_ethical_tension"] = f"{a.strip()}  ⟷  {b.strip()}".strip(" ⟷ ")
+
+            csf_section_close()
+
+
+    # ==========================================================
+    # STEP 8: INSTITUTIONAL AND GOVERNANCE CONSTRAINTS
+    # ==========================================================
+    elif step == 8:
         st.markdown(
             """
             <div style="
@@ -930,9 +1003,9 @@ def render_open_ended():
         )
 
     # ==========================================================
-    # STEP 8: DECISION + OUTPUT 
+    # STEP 9: DECISION + OUTPUT 
     # ==========================================================
-    elif step == 8:
+    elif step == 9:
         _render_step_tile_html(
             "Record the decision in operational terms, then generate a structured rationale for demonstration purposes.",
         )
