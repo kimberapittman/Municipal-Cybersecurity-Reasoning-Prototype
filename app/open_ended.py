@@ -545,17 +545,26 @@ def render_open_ended():
             unsafe_allow_html=True
         )
 
-        selected_fn = st.radio(
+        options = ["— Select one —"] + list(CSF_FUNCTION_PROMPTS.keys())
+
+        selected = st.radio(
             label="Procedural Context",
-            options=list(CSF_FUNCTION_PROMPTS.keys()),
-            index=None,
-            format_func=lambda k: CSF_FUNCTION_PROMPTS[k]["prompt"],
-            key="oe_csf_function",
+            options=options,
+            index=0,
+            format_func=lambda k: k if k == "— Select one —" else CSF_FUNCTION_PROMPTS[k]["prompt"],
+            key="oe_csf_function_choice",
             label_visibility="collapsed",
         )
 
-        label = CSF_FUNCTION_PROMPTS.get(selected_fn, {}).get("label", selected_fn)
-        st.info(f"Procedural context recorded: **{label}**")
+        # write the actual code to oe_csf_function
+        if selected != "— Select one —":
+            st.session_state["oe_csf_function"] = selected
+            label = CSF_FUNCTION_PROMPTS.get(selected, {}).get("label", selected)
+            st.info(f"Procedural context recorded: **{label}**")
+        else:
+            # explicitly clear to avoid stale values
+            st.session_state["oe_csf_function"] = ""
+
 
     # ==========================================================
     # STEP 4: STAKEHOLDER IDENTIFICATION
@@ -640,14 +649,14 @@ def render_open_ended():
     elif step == 5:
         csf_fn_index, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(str(CSF_EXPORT_PATH))
 
-        selected_fn = st.session_state.get("oe_csf_function")  # single source of truth
+        selected_fn = st.session_state.get("oe_csf_function", "")
+        # st.caption(f"DEBUG selected_fn = {selected_fn!r}")  # uncomment once if needed
 
         if not selected_fn:
             st.warning("No procedural context selected in Step 3. Showing all CSF functions.")
             fn_ids = list(csf_fn_index.keys())
         else:
             fn_ids = [selected_fn]
-
 
         # --- Step 5 UI starts here ---
         st.markdown(
@@ -772,7 +781,7 @@ def render_open_ended():
     # STEP 6: PFCE + TENSION
     # ==========================================================
     elif step == 6:
-
+    
         # ---------- PFCE principle triage (multi-select) ----------
         with st.container():
             st.markdown('<div class="pfce-principles-anchor"></div>', unsafe_allow_html=True)
