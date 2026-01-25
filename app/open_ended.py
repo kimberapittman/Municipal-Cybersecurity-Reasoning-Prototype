@@ -93,8 +93,9 @@ def oe_init_record():
         "stakeholders": [],
 
         "ethical": {
+            "pfce_salience_selected": [],
             "pfce_principles": [],
-            "analysis": "",
+            "pfce_pressure_summary": "",
         },
 
         "tension": {
@@ -131,8 +132,9 @@ OE_KEYMAP = {
     "stakeholders_combined": "oe_stakeholders",  # set this yourself after parsing "Other"
 
     # Step 6 (ethical)
-    "ethical_analysis": "oe_pfce_analysis",
-    "pfce_principles": "oe_pfce_principles",  # you’ll add this when you implement PFCE selection
+    "pfce_salience_selected": "oe_pfce_salience_selected",
+    "pfce_principles": "oe_pfce_principles",
+    "pfce_pressure_summary": "oe_pfce_pressure_summary",
 
     # Step 7 (tension)
     "tension_a": "oe_tension_a",              # strongly recommend splitting, not one blob
@@ -172,13 +174,17 @@ def oe_sync_record():
     rec["stakeholders"] = _get(km["stakeholders_combined"], []) or []
 
     # Step 6
-    rec["ethical"]["analysis"] = str(_get(km["ethical_analysis"], "")).strip()
+    rec["ethical"]["pfce_salience_selected"] = _get(km["pfce_salience_selected"], []) or []
     rec["ethical"]["pfce_principles"] = _get(km["pfce_principles"], []) or []
+    rec["ethical"]["pfce_pressure_summary"] = str(_get(km["pfce_pressure_summary"], "")).strip()
 
     # Step 7
     rec["tension"]["a"] = str(_get(km.get("tension_a", ""), "")).strip()
     rec["tension"]["b"] = str(_get(km.get("tension_b", ""), "")).strip()
     rec["tradeoff_reasoning"] = str(_get(km["tradeoff_reasoning"], "")).strip()
+    rec["tension"]["statement"] = (
+        f"{rec['tension']['a']}  ⟷  {rec['tension']['b']}".strip(" ⟷ ")
+)
 
     # Step 8
     rec["constraints"]["selected"] = _get(km["constraints_selected"], []) or []
@@ -421,6 +427,13 @@ def _build_pdf(title: str, lines: list[str]) -> BytesIO:
     c.setFont("Helvetica", 10)
 
     rec = st.session_state.get(OE_RECORD_KEY, {})
+    tension = rec.get("tension", {}).get("statement", "")
+
+    if tension:
+        lines.append(f"Decision Tension: {tension}")
+    else:
+        lines.append("Decision Tension: Not specified")
+
     code = rec.get("procedural_context", "").strip()
     label = CSF_FUNCTION_PROMPTS.get(code, {}).get("label", code or "Not specified")
     lines.append(f"Procedural Context: {label}")
@@ -909,7 +922,7 @@ def render_open_ended():
                 }
 
                 csf_section_close()
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 
     # ==========================================================
     # STEP 7: TENSION IDENTIFICATION
@@ -924,7 +937,7 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            What institutional or governance constraints shape this decision?
+            What is the central decision tension at this decision point?
             </div>
             """,
             unsafe_allow_html=True
@@ -938,36 +951,97 @@ def render_open_ended():
                 color: rgba(229,231,235,0.65);
                 line-height: 1.4;
             ">
-            Select all that apply. These constraints limit or shape feasible actions or justifications.
+            State the tension as two justified considerations that cannot both be fully satisfied at this decision point.
+            These considerations may be ethical, technical, or both.
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # ---------- Ethical tension (two justified obligations) ----------
+        # ---- Optional context cues (pull-through from earlier steps) ----
+        decision_point = (st.session_state.get("oe_decision_point", "") or "").strip()
+
+        csf_code = (st.session_state.get("oe_csf_function", "") or "").strip()
+        csf_label = CSF_FUNCTION_PROMPTS.get(csf_code, {}).get("label", csf_code) if csf_code else "Not specified"
+
+        tech_cats = st.session_state.get("oe_csf_categories_selected", []) or []
+        tech_outs = st.session_state.get("oe_csf_outcomes_selected", []) or []
+        tech_other = (st.session_state.get("oe_technical_other", "") or "").strip()
+
+        salience = st.session_state.get("oe_pfce_salience_selected", []) or []
+        principles = st.session_state.get("oe_pfce_principles", []) or []
+        ethical_pressure = (st.session_state.get("oe_pfce_pressure_summary", "") or "").strip()
+
+        with st.expander("View context cues (optional)", expanded=False):
+            if decision_point:
+                st.write(f"**Decision point:** {decision_point}")
+            st.write(f"**Procedural context (CSF):** {csf_label}")
+
+            st.write(f"**Technical selections:** {len(tech_cats)} category area(s), {len(tech_outs)} outcome(s)")
+            if tech_other:
+                st.write(f"**Other technical notes:** {tech_other}")
+
+            if salience:
+                st.write(f"**Ethical salience flags selected:** {len(salience)}")
+            if principles:
+                st.write("**PFCE principles implicated:** " + ", ".join(principles))
+            if ethical_pressure:
+                st.write("**Ethical pressure (brief):** " + ethical_pressure)
+
+        # ---- Optional tension type label (no gating) ----
+        st.radio(
+            "Tension type (optional)",
+            options=[
+                "Not specified",
+                "Ethical–Technical",
+                "Technical–Technical",
+                "Ethical–Ethical",
+            ],
+            index=0,
+            key="oe_tension_type",
+            horizontal=True,
+        )
+
+        # ---- Decision tension input ----
         with st.container():
-            st.markdown('<div class="pfce-tension-anchor"></div>', unsafe_allow_html=True)
+            st.markdown('<div class="tension-anchor"></div>', unsafe_allow_html=True)
 
             csf_section_open(
-                "Ethical Tension",
-                "State the central tension as two justified obligations that cannot both be fully fulfilled."
+                "Decision Tension",
+                "Write two justified considerations that pull in different directions at this decision point."
             )
 
             a = st.text_area(
-                "Obligation A",
+                "Consideration A",
                 key="oe_tension_a",
                 height=90,
-                placeholder="Example: Maintain continuity of essential services to prevent harm to residents.",
+                placeholder=(
+                    "Example (technical): Maintain system availability and service continuity.\n"
+                    "Example (ethical): Avoid harm to residents dependent on disrupted services."
+                ),
             )
 
             b = st.text_area(
-                "Obligation B",
+                "Consideration B",
                 key="oe_tension_b",
                 height=90,
-                placeholder="Example: Contain the threat quickly to prevent wider compromise and longer disruption.",
+                placeholder=(
+                    "Example (technical): Contain compromise quickly to prevent wider spread.\n"
+                    "Example (ethical): Preserve transparency and accountability in communications."
+                ),
             )
 
-            st.session_state["oe_ethical_tension"] = f"{a.strip()}  ⟷  {b.strip()}".strip(" ⟷ ")
+            # Persist neutral tension statement for export (no assumptions)
+            a_clean = (a or "").strip()
+            b_clean = (b or "").strip()
+
+            st.session_state["oe_tension_statement"] = f"{a_clean}  ⟷  {b_clean}".strip(" ⟷ ")
+
+            # Optional lightweight feedback
+            if a_clean or b_clean:
+                st.caption("Tension captured for later justification and export.")
+            else:
+                st.caption("No tension recorded.")
 
             csf_section_close()
 
@@ -1075,29 +1149,29 @@ def render_open_ended():
         # export rec (PDF generation, etc.) goes here
 
 
-    # NAV CONTROLS (NO GATING)
-    with st.container():
-        st.markdown('<div class="oe-nav-anchor"></div>', unsafe_allow_html=True)
+        # NAV CONTROLS (NO GATING)
+        with st.container():
+            st.markdown('<div class="oe-nav-anchor"></div>', unsafe_allow_html=True)
 
-        col_l, col_r = st.columns(2, gap="large")
+            col_l, col_r = st.columns(2, gap="large")
 
-        with col_l:
-            if step > 1:
-                if st.button("◀ Previous", key=f"oenav_prev_{step}"):
-                    st.session_state["oe_step"] = step - 1
-                    _safe_rerun()
-            else:
-                st.empty()
+            with col_l:
+                if step > 1:
+                    if st.button("◀ Previous", key=f"oenav_prev_{step}"):
+                        st.session_state["oe_step"] = step - 1
+                        _safe_rerun()
+                else:
+                    st.empty()
 
-        with col_r:
-            if step < total_steps:
-                if st.button("Next ▶", key=f"oenav_next_{step}"):
-                    st.session_state["oe_step"] = step + 1
-                    _safe_rerun()
-            else:
-                if st.button("Generate PDF", key="oe_generate_pdf", use_container_width=False):
-                    st.session_state["oe_generate"] = True
-                    _safe_rerun()
+            with col_r:
+                if step < total_steps:
+                    if st.button("Next ▶", key=f"oenav_next_{step}"):
+                        st.session_state["oe_step"] = step + 1
+                        _safe_rerun()
+                else:
+                    if st.button("Generate PDF", key="oe_generate_pdf", use_container_width=False):
+                        st.session_state["oe_generate"] = True
+                        _safe_rerun()
 
 
 
