@@ -510,7 +510,7 @@ def render_open_ended():
                 font-size: 1.05rem;
                 line-height: 1.45;
             ">
-            What is the specific operational decision being considered?:
+            What is the specific operational decision being considered?
             </div>
             """,
             unsafe_allow_html=True
@@ -530,40 +530,32 @@ def render_open_ended():
     # STEP 3: Procedural Context
     # ==========================================================
     elif step == 3:
+        # Always reset the radio when entering Step 3
+        st.session_state.pop("oe_csf_function_choice", None)
+        st.session_state["oe_csf_function"] = ""
+
         st.markdown(
             """
-            <div style="
-                margin: 0 0 6px 0;
-                font-weight: 500;
-                color: rgba(229,231,235,0.90);
-                font-size: 1.05rem;
-                line-height: 1.45;
-            ">
-            Which selection best matches the procedural situation you are addressing?
+            <div style="margin: 0 0 6px 0; font-weight: 500;">
+            Which question best matches the procedural situation you are addressing?
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        options = list(CSF_FUNCTION_PROMPTS.keys())
-
         selected = st.radio(
             label="Procedural Context",
-            options=options,
-            index=0,
-            format_func=lambda k: k if k == "— Select one —" else CSF_FUNCTION_PROMPTS[k]["prompt"],
+            options=list(CSF_FUNCTION_PROMPTS.keys()),
+            index=None, 
+            format_func=lambda k: CSF_FUNCTION_PROMPTS[k]["prompt"],
             key="oe_csf_function_choice",
             label_visibility="collapsed",
         )
 
-        # write the actual code to oe_csf_function
-        if selected != "— Select one —":
+        if selected:
             st.session_state["oe_csf_function"] = selected
-            label = CSF_FUNCTION_PROMPTS.get(selected, {}).get("label", selected)
-            st.info(f"Procedural context recorded: **{label}**")
-        else:
-            # explicitly clear to avoid stale values
-            st.session_state["oe_csf_function"] = ""
+            label = CSF_FUNCTION_PROMPTS[selected]["label"]
+            st.info(f"Procedural context informed by NIST CSF Function: **{label}**")
 
 
     # ==========================================================
