@@ -606,10 +606,11 @@ def render_open_ended():
         )
 
         if selected:
-            st.session_state["oe_suggested_csf_functions"] = DECISION_CLASSIFICATION_OPTIONS[selected]["csf_suggested"]
+            st.session_state["oe_suggested_csf_functions"] = (
+                DECISION_CLASSIFICATION_OPTIONS[selected]["csf_suggested"]
+            )
 
             st.info("Decision classification recorded.")
-            st.session_state["oe_step4_complete"] = bool(combined)
 
 
     # ==========================================================
