@@ -63,8 +63,8 @@ OE_STEP_TITLES = {
     2: "Decision Point",
     3: "Decision Classification",
     4: "Stakeholder Identification",
-    5: "NIST CSF Mapping",
-    6: "PFCE Analysis and Ethical Tension",
+    5: "Technical Considerations",
+    6: "Ethical Considerations",
     7: "Institutional and Governance Constraints",
     8: "Decision (and documented rationale)",
 }
@@ -690,7 +690,7 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 5: NIST CSF Mapping (Technical Considerations)
+    # STEP 5: Technical Considerations
     # ==========================================================
     elif step == 5:
         functions, categories, subcats, cats_by_fn, subs_by_cat, refs_by_subcat = load_csf_export_index(
