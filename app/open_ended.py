@@ -1149,29 +1149,29 @@ def render_open_ended():
         # export rec (PDF generation, etc.) goes here
 
 
-        # NAV CONTROLS (NO GATING)
-        with st.container():
-            st.markdown('<div class="oe-nav-anchor"></div>', unsafe_allow_html=True)
+    # NAV CONTROLS (NO GATING)
+    with st.container():
+        st.markdown('<div class="oe-nav-anchor"></div>', unsafe_allow_html=True)
 
-            col_l, col_r = st.columns(2, gap="large")
+        col_l, col_r = st.columns(2, gap="large")
 
-            with col_l:
-                if step > 1:
-                    if st.button("◀ Previous", key=f"oenav_prev_{step}"):
-                        st.session_state["oe_step"] = step - 1
-                        _safe_rerun()
-                else:
-                    st.empty()
+        with col_l:
+            if step > 1:
+                if st.button("◀ Previous", key=f"oenav_prev_{step}"):
+                    st.session_state["oe_step"] = step - 1
+                    _safe_rerun()
+            else:
+                st.empty()
 
-            with col_r:
-                if step < total_steps:
-                    if st.button("Next ▶", key=f"oenav_next_{step}"):
-                        st.session_state["oe_step"] = step + 1
-                        _safe_rerun()
-                else:
-                    if st.button("Generate PDF", key="oe_generate_pdf", use_container_width=False):
-                        st.session_state["oe_generate"] = True
-                        _safe_rerun()
+        with col_r:
+            if step < total_steps:
+                if st.button("Next ▶", key=f"oenav_next_{step}"):
+                    st.session_state["oe_step"] = step + 1
+                    _safe_rerun()
+            else:
+                if st.button("Generate PDF", key="oe_generate_pdf", use_container_width=False):
+                    st.session_state["oe_generate"] = True
+                    _safe_rerun()
 
 
 
