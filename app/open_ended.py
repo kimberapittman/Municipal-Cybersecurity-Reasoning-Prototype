@@ -685,7 +685,6 @@ def render_open_ended():
             st.info("Stakeholders identified: **" + ", ".join(combined) + "**")
         else:
             st.warning("Identify at least one stakeholder to continue.")
-            st.stop()
 
 
     # ==========================================================
