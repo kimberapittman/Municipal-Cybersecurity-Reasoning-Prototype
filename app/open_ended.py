@@ -395,6 +395,18 @@ PFCE_PROMPTS = {
     "Explicability": "Is accountability, transparency, or explainability central to this decision?",
 }
 
+TEMP_CONSTRAINT_OPTIONS = [
+    "Legal or regulatory requirements",
+    "Public transparency or disclosure obligations",
+    "Budgetary or resource limitations",
+    "Staffing or expertise constraints",
+    "Procurement or contracting limitations",
+    "Political or leadership direction",
+    "Interagency or third-party dependencies",
+    "Time sensitivity or urgency",
+    "Incomplete or uncertain information",
+]
+
 
 def _build_pdf(title: str, lines: list[str]) -> BytesIO:
     buffer = BytesIO()
@@ -917,24 +929,79 @@ def render_open_ended():
 
 
     # ==========================================================
-    # STEP 7: CONSTRAINTS
+    # STEP 7: INSTITUTIONAL AND GOVERNANCE CONSTRAINTS
     # ==========================================================
     elif step == 7:
-        _render_step_tile_html(
-            "Document constraints that shape or limit feasible actions or justification.",
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 6px 0;
+                font-weight: 500;
+                color: rgba(229,231,235,0.90);
+                font-size: 1.05rem;
+                line-height: 1.45;
+            ">
+            What institutional or governance constraints shape this decision?
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.multiselect(
-            "Constraints (select any that apply)",
-            options=GOV_CONSTRAINTS,
-            key="oe_constraints",
+        st.markdown(
+            """
+            <div style="
+                margin: 0 0 0.75rem 0;
+                font-size: 0.9rem;
+                color: rgba(229,231,235,0.65);
+                line-height: 1.4;
+            ">
+            Select all that apply. These constraints limit or shape feasible actions or justifications.
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-        st.text_area(
-            "Other constraints (optional)",
-            key="oe_constraints_other",
-            height=90,
-        )
+        selected_constraints = []
+
+        for c in TEMP_CONSTRAINT_OPTIONS:
+            if st.checkbox(c, key=f"oe_constraint_{c}"):
+                selected_constraints.append(c)
+
+        # "Other" constraint (inline)
+        col_l, col_r = st.columns([1, 2], gap="large")
+
+        with col_l:
+            add_other = st.checkbox(
+                "Other constraint(s) not listed",
+                key="oe_constraints_other_toggle",
+            )
+
+        other_text = ""
+        with col_r:
+            if add_other:
+                other_text = st.text_area(
+                    "Other constraints",
+                    key="oe_constraints_other",
+                    height=80,
+                    placeholder="Example: Pending litigation, labor agreement provisions, state-level oversight",
+                    label_visibility="collapsed",
+                ).strip()
+            else:
+                st.empty()
+
+        # Combine + de-dupe
+        other_list = [s.strip() for s in other_text.split(",") if s.strip()]
+        combined = list(dict.fromkeys(selected_constraints + other_list))
+
+        # Persist
+        st.session_state["oe_constraints"] = combined
+
+        # Feedback + gating
+        if combined:
+            st.info("Constraints identified: **" + ", ".join(combined) + "**")
+        else:
+            st.warning("Identify at least one institutional or governance constraint to continue.")
+            st.stop()
 
         st.text_area(
             "Reasoning about consequences",
