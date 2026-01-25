@@ -790,60 +790,71 @@ def render_open_ended():
         # Persist
         st.session_state["oe_stakeholders"] = combined
 
-
     # ==========================================================
     # STEP 6: Ethical Consideration(s)
     # ==========================================================
     elif step == 6:
 
-        # ---------- A) Pre-principle surfacing ----------
+        # ---------- A) Ethical salience surfacing (pre-principle) ----------
         with st.container():
             st.markdown('<div class="pfce-surfacing-anchor"></div>', unsafe_allow_html=True)
 
             csf_section_open(
                 "Ethical Salience Check",
-                "Answer the prompts below to surface ethically significant impacts and pressures associated with this decision point."
+                "Use these prompts to surface ethically significant impacts and pressures in this decision context. "
+                "These prompts do not classify the decision; they help surface what may matter ethically."
             )
 
+            # Capture surfacing responses (stored by prompt id)
+            surfacing_responses = {}
             for item in PFCE_SURFACING_PROMPTS:
-                st.text_area(
-                    item["prompt"],
-                    key=f"oe_pfce_surface_{item['id']}",
+                pid = item["id"]
+                q = item["prompt"]
+                surfacing_responses[pid] = st.text_area(
+                    q,
+                    key=f"oe_pfce_surface_{pid}",
                     height=90,
                     placeholder="1–2 sentences (optional).",
-                )
+                ).strip()
+
+            # Persist a compact dict for later export/review if needed
+            st.session_state["oe_pfce_surfacing"] = surfacing_responses
 
             csf_section_close()
 
-        # Optional: “suggested lenses” based on which surfacing prompts have text
-        suggested = []
+        # Build "suggested lenses" based on which surfacing prompts user actually answered
+        suggested_lenses = []
         for item in PFCE_SURFACING_PROMPTS:
             val = (st.session_state.get(f"oe_pfce_surface_{item['id']}", "") or "").strip()
             if val:
-                suggested.extend(item["maps_to"])
-        suggested = list(dict.fromkeys(suggested))  # de-dupe, preserve order
+                suggested_lenses.extend(item.get("maps_to", []))
+        suggested_lenses = list(dict.fromkeys(suggested_lenses))  # de-dupe, preserve order
 
-        # ---------- B) PFCE mapping (select lenses) ----------
+        # ---------- B) PFCE principle mapping (select lenses) ----------
         with st.container():
             st.markdown('<div class="pfce-principles-anchor"></div>', unsafe_allow_html=True)
 
             csf_section_open(
                 "PFCE Principle Mapping",
-                "Select the PFCE principles that best help explain why the impacts you identified are ethically significant. This does not prescribe outcomes; it structures ethical reasoning."
+                "Select any PFCE principles that help explain why the surfaced impacts are ethically significant. "
+                "Selecting none is allowed; this step supports ethical reasoning without prescribing outcomes."
             )
 
-            if suggested:
-                st.caption("Suggested lenses based on your responses (optional): " + ", ".join(suggested))
+            if suggested_lenses:
+                st.caption(
+                    "Suggested lenses based on your responses (optional): "
+                    + ", ".join(suggested_lenses)
+                )
 
             selected_pfce_ids = []
             pfce_ids = list(PFCE_DEFINITIONS.keys())
 
             for pid in pfce_ids:
-                prompt = (PFCE_SURFACING_PROMPTS.get(pid, "") or "").strip()
+                triage_prompt = (PFCE_PROMPTS.get(pid, "") or "").strip()
                 definition = (PFCE_DEFINITIONS.get(pid, "") or "").strip()
 
                 checked = st.checkbox(
-                    f"**{pid}** — {prompt}" if prompt else f"**{pid}**",
+                    f"**{pid}** — {triage_prompt}" if triage_prompt else f"**{pid}**",
                     key=f"oe_pfce_{pid}",
                 )
                 if checked:
@@ -862,31 +873,39 @@ def render_open_ended():
 
             csf_section_close()
 
-        # ---------- C) PFCE pressure prompts (principle-specific articulation) ----------
+        # ---------- C) Principle-specific pressure prompts (structured articulation) ----------
         with st.container():
             st.markdown('<div class="pfce-pressure-anchor"></div>', unsafe_allow_html=True)
 
             csf_section_open(
                 "PFCE Pressure Prompts",
-                "For each selected principle, briefly state how it is implicated in this decision point."
+                "If you selected any principles, briefly state how each is implicated in this decision point. "
+                "These short statements are intended to support later tension articulation and justification."
             )
 
             selected_pfce_ids = st.session_state.get("oe_pfce_principles", []) or []
 
+            # Store principle-specific responses in a dict for clean export later
+            pressure_responses = {}
+
             if not selected_pfce_ids:
-                st.info("No PFCE principles selected. You may still proceed to articulate an ethical tension.")
+                st.caption("No PFCE principles selected. You may still proceed to identify a tension.")
             else:
                 for pid in selected_pfce_ids:
-                    q = PFCE_PRESSURE_PROMPTS.get(pid, {}).get("prompt", "")
-                    st.text_area(
-                        f"{pid} — {q}",
+                    q = PFCE_PRESSURE_PROMPTS.get(pid, {}).get("prompt", "").strip()
+                    label = PFCE_PRESSURE_PROMPTS.get(pid, {}).get("label", pid)
+
+                    pressure_responses[pid] = st.text_area(
+                        f"{label} — {q}" if q else f"{label}",
                         key=f"oe_pfce_pressure_{pid}",
                         height=90,
-                        placeholder="1–2 sentences.",
-                    )
+                        placeholder="1–2 sentences (optional).",
+                    ).strip()
+
+            st.session_state["oe_pfce_pressure"] = pressure_responses
 
             csf_section_close()
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 
     # ==========================================================
     # STEP 7: TENSION IDENTIFICATION
