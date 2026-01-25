@@ -552,9 +552,9 @@ def render_open_ended():
             label_visibility="collapsed",
         )
 
-        if selected:
-            st.session_state["oe_csf_function"] = selected
-            label = CSF_FUNCTION_PROMPTS[selected]["label"]
+        code = st.session_state.get("oe_csf_function", "")
+        if code:
+            label = CSF_FUNCTION_PROMPTS.get(code, {}).get("label", code)
             st.info(f"Procedural context informed by NIST CSF Function: **{label}**")
 
 
