@@ -366,6 +366,7 @@ def _build_pdf(title: str, lines: list[str]) -> BytesIO:
 
     c.setFont("Helvetica", 10)
 
+    rec = st.session_state.get(OE_RECORD_KEY, {})
     code = rec.get("procedural_context", "").strip()
     label = CSF_FUNCTION_PROMPTS.get(code, {}).get("label", code or "Not specified")
     lines.append(f"Procedural Context: {label}")
@@ -682,7 +683,7 @@ def render_open_ended():
         selected_subcat_ids = []
 
         for fn_id in fn_ids:
-            fn = functions.get(fn_id, {})
+            fn = csf_fn_index.get(fn_id, {})
             fn_title = fn.get("title", fn_id)
             fn_desc = fn.get("description", "")
 
